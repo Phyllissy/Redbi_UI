@@ -531,12 +531,202 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-default" onclick="window.close()">取消</button>
+            <button class="btn btn-default" onclick="window.location.href='index1.html'">取消</button>
             <button class="btn btn-primary" onclick="saveTerminology()">保存</button>
         </div>
     </div>
 
     <script>
+        /**
+         * 获取 URL 参数
+         * @param {string} name - 参数名称
+         * @returns {string} 参数值
+         */
+        function getUrlParam(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+        
+        /**
+         * 初始化页面数据
+         */
+        function initPageData() {
+            const termId = getUrlParam('id');
+            
+            if (termId) {
+                // 修改标题为编辑模式
+                document.querySelector('.modal-title').textContent = '编辑业务术语';
+                
+                // 加载术语数据，这里模拟从后端获取数据
+                // 实际情况中，应该是发送 AJAX 请求获取数据
+                loadTerminologyData(termId);
+            }
+        }
+        
+        /**
+         * 加载术语数据
+         * @param {string} id - 术语 ID
+         */
+        function loadTerminologyData(id) {
+            // 模拟数据，实际应该从后端 API 获取
+            const mockData = {
+                id: id,
+                name: '测试术语_' + id,
+                alias: '测试别名',
+                domain: 'trade',
+                type: 'condition',
+                conditions: [
+                    { field: 'ad_revenue', operator: '>', value: '1000' },
+                    { field: 'platform_type', operator: '=', value: 'app' }
+                ],
+                indicators: [1, 2, 4] // 关联指标ID列表
+            };
+            
+            // 填充表单数据
+            fillFormData(mockData);
+        }
+        
+        /**
+         * 填充表单数据
+         * @param {Object} data - 术语数据
+         */
+        function fillFormData(data) {
+            // 填充基本信息
+            document.getElementById('term-name').value = data.name;
+            document.querySelector('input[placeholder="请输入别名，可选"]').value = data.alias;
+            document.getElementById('business-domain').value = data.domain;
+            
+            // 设置类型并触发显示相应区域
+            const termTypeSelect = document.getElementById('term-type');
+            termTypeSelect.value = data.type;
+            handleTypeChange();
+            
+            // 如果是条件类型，设置条件
+            if (data.type === 'condition' && data.conditions && data.conditions.length > 0) {
+                setupConditions(data.conditions);
+            }
+            
+            // 设置关联指标/维度
+            if (data.indicators && data.indicators.length > 0) {
+                setupSelectedIndicators(data.indicators);
+            }
+        }
+        
+        /**
+         * 设置条件数据
+         * @param {Array} conditions - 条件数组
+         */
+        function setupConditions(conditions) {
+            // 清空现有条件行
+            document.getElementById('indicator-conditions').innerHTML = '';
+            document.getElementById('dimension-conditions').innerHTML = '';
+            
+            conditions.forEach(condition => {
+                let panel;
+                // 根据字段名判断是指标还是维度，简单示例
+                if (['ad_revenue', 'brand_revenue', 'search_revenue'].includes(condition.field)) {
+                    panel = document.getElementById('indicator-conditions');
+                } else {
+                    panel = document.getElementById('dimension-conditions');
+                }
+                
+                // 创建条件行
+                const row = document.createElement('div');
+                row.className = 'condition-row';
+                row.innerHTML = `
+                    <select class="form-select condition-field">
+                        <option value="">请选择</option>
+                        <option value="ad_revenue">广告流水</option>
+                        <option value="brand_revenue">品牌广告流水</option>
+                        <option value="search_revenue">搜索广告流水</option>
+                        <option value="platform_type">平台类型</option>
+                        <option value="ad_position">广告位置</option>
+                        <option value="category_id">类目ID</option>
+                    </select>
+                    <select class="form-select condition-operator">
+                        <option value="=">=</option>
+                        <option value=">">></option>
+                        <option value="<"><</option>
+                        <option value=">=">>=</option>
+                        <option value="<="><=</option>
+                        <option value="!=">!=</option>
+                        <option value="IN">包含于</option>
+                        <option value="NOT IN">不包含于</option>
+                        <option value="LIKE">模糊匹配</option>
+                    </select>
+                    <input type="text" class="form-control condition-value" placeholder="请输入值">
+                    <button class="btn btn-default condition-add">+</button>
+                    <button class="btn btn-default condition-remove">-</button>
+                `;
+                
+                // 设置选中值
+                row.querySelector('.condition-field').value = condition.field;
+                row.querySelector('.condition-operator').value = condition.operator;
+                row.querySelector('.condition-value').value = condition.value;
+                
+                panel.appendChild(row);
+            });
+            
+            // 更新条件预览
+            updateConditionPreview();
+        }
+        
+        /**
+         * 设置选中的指标/维度
+         * @param {Array} indicatorIds - 指标/维度 ID 数组
+         */
+        function setupSelectedIndicators(indicatorIds) {
+            // 选中对应的复选框
+            indicatorIds.forEach(id => {
+                const checkbox = document.querySelector(`.indicator-item[data-id="${id}"] .checkbox-input`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                    
+                    // 触发点击事件来添加到已选列表
+                    const event = new Event('change', { bubbles: true });
+                    checkbox.dispatchEvent(event);
+                }
+            });
+        }
+        
+        /**
+         * 保存业务术语
+         */
+        function saveTerminology() {
+            if (validateForm()) {
+                const termId = getUrlParam('id');
+                const actionType = termId ? '更新' : '新建';
+                
+                // 获取表单数据
+                const formData = {
+                    id: termId || new Date().getTime(), // 如果没有 ID，生成一个
+                    name: document.getElementById('term-name').value,
+                    alias: document.querySelector('input[placeholder="请输入别名，可选"]').value,
+                    domain: document.getElementById('business-domain').value,
+                    type: document.getElementById('term-type').value,
+                    // 其他数据收集...
+                };
+                
+                // 这里应该发送 AJAX 请求将数据保存到后端
+                // 模拟保存成功
+                alert(`${actionType}业务术语成功`);
+                
+                // 返回到列表页面
+                window.location.href = 'index1.html';
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化页面数据
+            initPageData();
+            
+            // 设置其他功能
+            setupConditionTabs();
+            setupConditionBuilder();
+            setupIndicatorSelection();
+            setupDescriptionEditor();
+        });
+
         /**
          * 处理类型变化
          */
@@ -627,26 +817,6 @@
             
             return isValid;
         }
-
-        /**
-         * 保存业务术语
-         */
-        function saveTerminology() {
-            if (validateForm()) {
-                alert('新建业务术语成功');
-                window.close();
-            }
-        }
-
-        /**
-         * 页面加载时初始化功能
-         */
-        document.addEventListener('DOMContentLoaded', function() {
-            setupConditionTabs();
-            setupConditionBuilder();
-            setupIndicatorSelection();
-            setupDescriptionEditor();
-        });
 
         /**
          * 设置条件标签页切换
@@ -773,310 +943,265 @@
             previewElement.textContent = conditions.join(' AND ');
             
             // 同时更新描述预览
-            <script>
-    /**
-     * 更新条件预览
-     */
-    function updateConditionPreview() {
-        const indicatorRows = document.querySelectorAll('#indicator-conditions .condition-row');
-        const dimensionRows = document.querySelectorAll('#dimension-conditions .condition-row');
-        const previewElement = document.getElementById('condition-preview-text');
-        
-        let conditions = [];
-        
-        // 处理指标条件
-        indicatorRows.forEach(row => {
-            const field = row.querySelector('.condition-field').value;
-            const operator = row.querySelector('.condition-operator').value;
-            const value = row.querySelector('.condition-value').value;
-            
-            if (field && operator && value) {
-                if (isNaN(value)) {
-                    conditions.push(`${field} ${operator} '${value}'`);
-                } else {
-                    conditions.push(`${field} ${operator} ${value}`);
-                }
-            }
-        });
-        
-        // 处理维度条件
-        dimensionRows.forEach(row => {
-            const field = row.querySelector('.condition-field').value;
-            const operator = row.querySelector('.condition-operator').value;
-            const value = row.querySelector('.condition-value').value;
-            
-            if (field && operator && value) {
-                if (operator === 'IN' || operator === 'NOT IN') {
-                    const values = value.split(',').map(v => `'${v.trim()}'`).join(', ');
-                    conditions.push(`${field} ${operator} (${values})`);
-                } else if (operator === 'LIKE') {
-                    conditions.push(`${field} ${operator} '%${value}%'`);
-                } else {
-                    conditions.push(`${field} ${operator} '${value}'`);
-                }
-            }
-        });
-        
-        previewElement.textContent = conditions.join(' AND ');
-        
-        // 同时更新描述预览
-        updateDescriptionPreview();
-    }
+            updateDescriptionPreview();
+        }
 
-    /**
-     * 设置指标/维度选择和排序
-     */
-    function setupIndicatorSelection() {
-        // 复选框选择
-        document.addEventListener('change', function(e) {
-            if (e.target.classList.contains('checkbox-input')) {
-                const item = e.target.closest('.indicator-item');
-                const id = item.getAttribute('data-id');
-                const label = item.querySelector('label').textContent;
+        /**
+         * 设置指标/维度选择和排序
+         */
+        function setupIndicatorSelection() {
+            // 复选框选择
+            document.addEventListener('change', function(e) {
+                if (e.target.classList.contains('checkbox-input')) {
+                    const item = e.target.closest('.indicator-item');
+                    const id = item.getAttribute('data-id');
+                    const label = item.querySelector('label').textContent;
+                    const type = item.querySelector('.item-type').textContent;
+                    
+                    const selectedList = document.getElementById('selected-indicators');
+                    
+                    if (e.target.checked) {
+                        // 添加到已选列表
+                        const li = document.createElement('li');
+                        li.className = 'sortable-item';
+                        li.setAttribute('data-id', id);
+                        li.setAttribute('draggable', 'true');
+                        li.innerHTML = `
+                            <span class="handle">⋮⋮</span>
+                            <span class="item-name">${label}</span>
+                            <span class="item-type ${type === '维度' ? 'dimension' : ''}">${type}</span>
+                            <span class="remove" onclick="removeSelectedItem(this, ${id})">×</span>
+                        `;
+                        selectedList.appendChild(li);
+                    } else {
+                        // 从已选列表中移除
+                        const selectedItem = selectedList.querySelector(`[data-id="${id}"]`);
+                        if (selectedItem) {
+                            selectedList.removeChild(selectedItem);
+                        }
+                    }
+                    
+                    // 更新已选计数
+                    updateSelectedCount();
+                    
+                    // 更新描述预览
+                    updateDescriptionPreview();
+                }
+            });
+            
+            // 设置排序功能
+            setupSortable();
+        }
+
+        /**
+         * 设置排序功能
+         */
+        function setupSortable() {
+            const selectedList = document.getElementById('selected-indicators');
+            
+            // 简单的拖拽排序实现
+            let draggedItem = null;
+            
+            document.addEventListener('dragstart', function(e) {
+                if (e.target.classList.contains('sortable-item')) {
+                    draggedItem = e.target;
+                    setTimeout(() => {
+                        e.target.style.opacity = '0.5';
+                    }, 0);
+                }
+            });
+            
+            document.addEventListener('dragend', function(e) {
+                if (e.target.classList.contains('sortable-item')) {
+                    e.target.style.opacity = '1';
+                    draggedItem = null;
+                }
+            });
+            
+            document.addEventListener('dragover', function(e) {
+                e.preventDefault();
+            });
+            
+            selectedList.addEventListener('dragenter', function(e) {
+                e.preventDefault();
+                const targetItem = e.target.closest('.sortable-item');
+                if (targetItem && targetItem !== draggedItem) {
+                    const rect = targetItem.getBoundingClientRect();
+                    const y = e.clientY - rect.top;
+                    
+                    if (y < rect.height / 2) {
+                        selectedList.insertBefore(draggedItem, targetItem);
+                    } else {
+                        selectedList.insertBefore(draggedItem, targetItem.nextSibling);
+                    }
+                    
+                    // 更新描述预览
+                    updateDescriptionPreview();
+                }
+            });
+        }
+
+        /**
+         * 移除已选项
+         * @param {HTMLElement} element - 被点击的移除按钮
+         * @param {string} id - 项目ID
+         */
+        function removeSelectedItem(element, id) {
+            // 移除已选列表中的项
+            const item = element.closest('.sortable-item');
+            item.parentNode.removeChild(item);
+            
+            // 取消对应复选框的选中状态
+            const checkbox = document.querySelector(`.indicator-item[data-id="${id}"] .checkbox-input`);
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+            
+            // 更新已选计数
+            updateSelectedCount();
+            
+            // 更新描述预览
+            updateDescriptionPreview();
+        }
+
+        /**
+         * 更新已选计数
+         */
+        function updateSelectedCount() {
+            const count = document.querySelectorAll('#selected-indicators .sortable-item').length;
+            document.getElementById('selected-count').textContent = count;
+        }
+
+        /**
+         * 更新描述预览
+         */
+        function updateDescriptionPreview() {
+            const selectedItems = document.querySelectorAll('#selected-indicators .sortable-item');
+            const conditionExpression = document.getElementById('condition-preview-text').textContent;
+            const descriptionContent = document.querySelector('.description-content');
+            
+            // 先清空预览内容
+            descriptionContent.innerHTML = '';
+            
+            // 分离指标和维度
+            let indicators = [];
+            let dimensions = [];
+            
+            selectedItems.forEach(item => {
+                const name = item.querySelector('.item-name').textContent;
                 const type = item.querySelector('.item-type').textContent;
                 
-                const selectedList = document.getElementById('selected-indicators');
-                
-                if (e.target.checked) {
-                    // 添加到已选列表
-                    const li = document.createElement('li');
-                    li.className = 'sortable-item';
-                    li.setAttribute('data-id', id);
-                    li.setAttribute('draggable', 'true');
-                    li.innerHTML = `
-                        <span class="handle">⋮⋮</span>
-                        <span class="item-name">${label}</span>
-                        <span class="item-type ${type === '维度' ? 'dimension' : ''}">${type}</span>
-                        <span class="remove" onclick="removeSelectedItem(this, ${id})">×</span>
-                    `;
-                    selectedList.appendChild(li);
+                if (type.includes('维度')) {
+                    dimensions.push(name);
                 } else {
-                    // 从已选列表中移除
-                    const selectedItem = selectedList.querySelector(`[data-id="${id}"]`);
-                    if (selectedItem) {
-                        selectedList.removeChild(selectedItem);
+                    indicators.push(name);
+                }
+            });
+            
+            // 构建HTML内容
+            let html = '包含以下指标与维度：<ul class="description-list">';
+            
+            // 添加指标
+            indicators.forEach(name => {
+                html += `<li class="description-item"><span class="tag-indicator">${name}</span></li>`;
+            });
+            
+            // 添加维度
+            dimensions.forEach(name => {
+                html += `<li class="description-item"><span class="tag-dimension">${name}</span></li>`;
+            });
+            
+            html += '</ul>';
+            
+            // 添加条件部分
+            if (conditionExpression) {
+                html += `
+                    <div class="description-condition">
+                        <div class="condition-title">筛选条件：</div>
+                        <div class="condition-code">${conditionExpression}</div>
+                    </div>
+                `;
+            }
+            
+            descriptionContent.innerHTML = html;
+        }
+
+        /**
+         * 设置描述编辑功能
+         */
+        function setupDescriptionEditor() {
+            const editDescBtn = document.getElementById('edit-description');
+            const refreshDescBtn = document.getElementById('refresh-description');
+            const descPreview = document.querySelector('.description-preview');
+            const descEditor = document.querySelector('.description-editor');
+            
+            if (editDescBtn) {
+                editDescBtn.addEventListener('click', function() {
+                    if (descEditor.style.display === 'none') {
+                        // 切换到编辑模式
+                        descEditor.style.display = 'block';
+                        descPreview.style.display = 'none';
+                        this.innerHTML = '<i class="edit-icon">↻</i> 返回预览';
+                        
+                        // 从预览生成文本到编辑器
+                        const descContent = generateDescriptionText();
+                        descEditor.value = descContent;
+                    } else {
+                        // 切换回预览模式
+                        descEditor.style.display = 'none';
+                        descPreview.style.display = 'block';
+                        this.innerHTML = '<i class="edit-icon">✎</i> 手动编辑';
                     }
-                }
-                
-                // 更新已选计数
-                updateSelectedCount();
-                
-                // 更新描述预览
-                updateDescriptionPreview();
+                });
             }
-        });
-        
-        // 设置排序功能
-        setupSortable();
-    }
-
-    /**
-     * 设置排序功能
-     */
-    function setupSortable() {
-        const selectedList = document.getElementById('selected-indicators');
-        
-        // 简单的拖拽排序实现
-        let draggedItem = null;
-        
-        document.addEventListener('dragstart', function(e) {
-            if (e.target.classList.contains('sortable-item')) {
-                draggedItem = e.target;
-                setTimeout(() => {
-                    e.target.style.opacity = '0.5';
-                }, 0);
-            }
-        });
-        
-        document.addEventListener('dragend', function(e) {
-            if (e.target.classList.contains('sortable-item')) {
-                e.target.style.opacity = '1';
-                draggedItem = null;
-            }
-        });
-        
-        document.addEventListener('dragover', function(e) {
-            e.preventDefault();
-        });
-        
-        selectedList.addEventListener('dragenter', function(e) {
-            e.preventDefault();
-            const targetItem = e.target.closest('.sortable-item');
-            if (targetItem && targetItem !== draggedItem) {
-                const rect = targetItem.getBoundingClientRect();
-                const y = e.clientY - rect.top;
-                
-                if (y < rect.height / 2) {
-                    selectedList.insertBefore(draggedItem, targetItem);
-                } else {
-                    selectedList.insertBefore(draggedItem, targetItem.nextSibling);
-                }
-                
-                // 更新描述预览
-                updateDescriptionPreview();
-            }
-        });
-    }
-
-    /**
-     * 移除已选项
-     * @param {HTMLElement} element - 被点击的移除按钮
-     * @param {string} id - 项目ID
-     */
-    function removeSelectedItem(element, id) {
-        // 移除已选列表中的项
-        const item = element.closest('.sortable-item');
-        item.parentNode.removeChild(item);
-        
-        // 取消对应复选框的选中状态
-        const checkbox = document.querySelector(`.indicator-item[data-id="${id}"] .checkbox-input`);
-        if (checkbox) {
-            checkbox.checked = false;
-        }
-        
-        // 更新已选计数
-        updateSelectedCount();
-        
-        // 更新描述预览
-        updateDescriptionPreview();
-    }
-
-    /**
-     * 更新已选计数
-     */
-    function updateSelectedCount() {
-        const count = document.querySelectorAll('#selected-indicators .sortable-item').length;
-        document.getElementById('selected-count').textContent = count;
-    }
-
-    /**
-     * 更新描述预览
-     */
-    function updateDescriptionPreview() {
-        const selectedItems = document.querySelectorAll('#selected-indicators .sortable-item');
-        const conditionExpression = document.getElementById('condition-preview-text').textContent;
-        const descriptionContent = document.querySelector('.description-content');
-        
-        // 先清空预览内容
-        descriptionContent.innerHTML = '';
-        
-        // 分离指标和维度
-        let indicators = [];
-        let dimensions = [];
-        
-        selectedItems.forEach(item => {
-            const name = item.querySelector('.item-name').textContent;
-            const type = item.querySelector('.item-type').textContent;
             
-            if (type.includes('维度')) {
-                dimensions.push(name);
-            } else {
-                indicators.push(name);
+            if (refreshDescBtn) {
+                refreshDescBtn.addEventListener('click', function() {
+                    updateDescriptionPreview();
+                });
             }
-        });
-        
-        // 构建HTML内容
-        let html = '包含以下指标与维度：<ul class="description-list">';
-        
-        // 添加指标
-        indicators.forEach(name => {
-            html += `<li class="description-item"><span class="tag-indicator">${name}</span></li>`;
-        });
-        
-        // 添加维度
-        dimensions.forEach(name => {
-            html += `<li class="description-item"><span class="tag-dimension">${name}</span></li>`;
-        });
-        
-        html += '</ul>';
-        
-        // 添加条件部分
-        if (conditionExpression) {
-            html += `
-                <div class="description-condition">
-                    <div class="condition-title">筛选条件：</div>
-                    <div class="condition-code">${conditionExpression}</div>
-                </div>
-            `;
         }
-        
-        descriptionContent.innerHTML = html;
-    }
 
-    /**
-     * 设置描述编辑功能
-     */
-    function setupDescriptionEditor() {
-        const editDescBtn = document.getElementById('edit-description');
-        const refreshDescBtn = document.getElementById('refresh-description');
-        const descPreview = document.querySelector('.description-preview');
-        const descEditor = document.querySelector('.description-editor');
-        
-        if (editDescBtn) {
-            editDescBtn.addEventListener('click', function() {
-                if (descEditor.style.display === 'none') {
-                    // 切换到编辑模式
-                    descEditor.style.display = 'block';
-                    descPreview.style.display = 'none';
-                    this.innerHTML = '<i class="edit-icon">↻</i> 返回预览';
-                    
-                    // 从预览生成文本到编辑器
-                    const descContent = generateDescriptionText();
-                    descEditor.value = descContent;
+        /**
+         * 从选中的指标和条件生成描述文本
+         * @returns {string} 生成的描述文本
+         */
+        function generateDescriptionText() {
+            const selectedItems = document.querySelectorAll('#selected-indicators .sortable-item');
+            const conditionExpression = document.getElementById('condition-preview-text').textContent;
+            
+            let indicatorNames = [];
+            let dimensionNames = [];
+            
+            selectedItems.forEach(item => {
+                const name = item.querySelector('.item-name').textContent;
+                const type = item.querySelector('.item-type').textContent;
+                
+                if (type.includes('维度')) {
+                    dimensionNames.push(name);
                 } else {
-                    // 切换回预览模式
-                    descEditor.style.display = 'none';
-                    descPreview.style.display = 'block';
-                    this.innerHTML = '<i class="edit-icon">✎</i> 手动编辑';
+                    indicatorNames.push(name);
                 }
             });
-        }
-        
-        if (refreshDescBtn) {
-            refreshDescBtn.addEventListener('click', function() {
-                updateDescriptionPreview();
-            });
-        }
-    }
-
-    /**
-     * 从选中的指标和条件生成描述文本
-     * @returns {string} 生成的描述文本
-     */
-    function generateDescriptionText() {
-        const selectedItems = document.querySelectorAll('#selected-indicators .sortable-item');
-        const conditionExpression = document.getElementById('condition-preview-text').textContent;
-        
-        let indicatorNames = [];
-        let dimensionNames = [];
-        
-        selectedItems.forEach(item => {
-            const name = item.querySelector('.item-name').textContent;
-            const type = item.querySelector('.item-type').textContent;
             
-            if (type.includes('维度')) {
-                dimensionNames.push(name);
-            } else {
-                indicatorNames.push(name);
+            let text = '';
+            
+            if (indicatorNames.length > 0) {
+                text += `包含${indicatorNames.join('、')}等${indicatorNames.length}个指标`;
             }
-        });
-        
-        let text = '';
-        
-        if (indicatorNames.length > 0) {
-            text += `包含${indicatorNames.join('、')}等${indicatorNames.length}个指标`;
+            
+            if (dimensionNames.length > 0) {
+                if (text) text += '，';
+                text += `包含${dimensionNames.join('、')}等${dimensionNames.length}个维度`;
+            }
+            
+            if (conditionExpression) {
+                if (text) text += '，';
+                text += `筛选条件为${conditionExpression}`;
+            }
+            
+            return text || '暂无描述信息';
         }
-        
-        if (dimensionNames.length > 0) {
-            if (text) text += '，';
-            text += `包含${dimensionNames.join('、')}等${dimensionNames.length}个维度`;
-        }
-        
-        if (conditionExpression) {
-            if (text) text += '，';
-            text += `筛选条件为${conditionExpression}`;
-        }
-        
-        return text || '暂无描述信息';
-    }
-</script>
+    </script>
+</body>
+</html>
