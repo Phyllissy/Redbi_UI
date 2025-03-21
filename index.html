@@ -80,29 +80,92 @@
             margin-bottom: 20px;
             display: flex;
             align-items: center;
+            background-color: #fff;
+            border-radius: 4px;
+            padding: 15px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
         }
         .search-input {
-            width: 300px;
-            margin-right: 10px;
+            width: 100%;
+            position: relative;
+            max-width: 500px;
+            margin-right: 15px;
+        }
+        .search-input input {
+            width: 100%;
+            padding: 10px 15px 10px 40px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        .search-input input:focus {
+            border-color: #409eff;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+        }
+        .search-input i {
+            position: absolute;
+            left: 15px;
+            top: 12px;
+            color: #909399;
+        }
+        .filter-select {
+            min-width: 180px;
+            margin: 0 15px;
+        }
+        .filter-select select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            background-color: #fff;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23909399' d='M6 8.825L1.175 4 2.05 3.125 6 7.075 9.95 3.125 10.825 4z'/%3E%3C/svg%3E");
+            background-position: right 10px center;
+            background-repeat: no-repeat;
+            padding-right: 30px;
+        }
+        .filter-select select:focus {
+            border-color: #409eff;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+        }
+        .search-button {
+            background-color: #409eff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .search-button:hover {
+            background-color: #66b1ff;
         }
         .table-container {
             background-color: #fff;
-            border-radius: 4px;
+            border-radius: 8px;
             box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
         }
         .table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
         }
         .table th, .table td {
             border-bottom: 1px solid #ebeef5;
-            padding: 12px 10px;
+            padding: 15px;
             text-align: left;
         }
         .table th {
             background-color: #f5f7fa;
-            color: #909399;
-            font-weight: normal;
+            color: #606266;
+            font-weight: 500;
+        }
+        .table tr:last-child td {
+            border-bottom: none;
         }
         .table tr:hover {
             background-color: #f5f7fa;
@@ -126,6 +189,37 @@
             margin-top: 20px;
             display: flex;
             justify-content: flex-end;
+            align-items: center;
+        }
+        .pagination-button {
+            min-width: 32px;
+            height: 32px;
+            line-height: 30px;
+            text-align: center;
+            margin: 0 5px;
+            background: #fff;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .pagination-button:hover:not(.pagination-button-active, .pagination-button-disabled) {
+            color: #409eff;
+            border-color: #c6e2ff;
+        }
+        .pagination-button-active {
+            background-color: #409eff;
+            color: #fff;
+            border-color: #409eff;
+        }
+        .pagination-button-disabled {
+            color: #c0c4cc;
+            cursor: not-allowed;
+        }
+        .pagination-text {
+            margin-left: 15px;
+            color: #606266;
+            font-size: 13px;
         }
         .tag {
             display: inline-block;
@@ -364,15 +458,18 @@
                     <div class="tab" onclick="switchTab('commercial')">商业化</div>
                 </div>
                 <div class="search-bar">
-                    <input type="text" class="form-control search-input" placeholder="请输入业务术语或描述搜索">
-                    <div style="margin-left: 10px;">
-                        <select class="form-select">
+                    <div class="search-input">
+                        <i class="search-icon">&#128269;</i>
+                        <input type="text" placeholder="请输入业务术语或描述搜索">
+                    </div>
+                    <div class="filter-select">
+                        <select>
                             <option value="">类型：请选择</option>
                             <option value="1">条件集合</option>
                             <option value="2">字段集合</option>
                         </select>
                     </div>
-                    <button class="btn btn-primary" style="margin-left: 10px;">搜索</button>
+                    <button class="search-button">搜索</button>
                 </div>
                 <div class="table-container">
                     <table class="table">
@@ -469,12 +566,12 @@
                 </div>
 
                 <div class="pagination">
-                    <button class="btn btn-default" disabled>上一页</button>
-                    <button class="btn btn-primary" style="margin-left: 5px;">1</button>
-                    <button class="btn btn-default" style="margin-left: 5px;">2</button>
-                    <button class="btn btn-default" style="margin-left: 5px;">3</button>
-                    <button class="btn btn-default" style="margin-left: 5px;">下一页</button>
-                    <span style="margin-left: 10px;">共20条，1/3页</span>
+                    <button class="pagination-button pagination-button-disabled">上一页</button>
+                    <button class="pagination-button pagination-button-active">1</button>
+                    <button class="pagination-button">2</button>
+                    <button class="pagination-button">3</button>
+                    <button class="pagination-button">下一页</button>
+                    <span class="pagination-text">共20条，1/3页</span>
                 </div>
             </div>
         </div>
@@ -709,53 +806,73 @@
         </div>
 
         <!-- 提示框 -->
-        <div id="toast" style="position: fixed; top: 20px; right: 20px; background-color: #67c23a; color: #fff; padding: 10px 20px; border-radius: 4px; display: none; z-index: 2000;">
+        <div id="toast" style="position: fixed; top: 20px; right: 20px; background-color: #67c23a; color: #fff; padding: 10px 20px; border-radius: 4px; display: none; z-index: 2000; box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);">
             操作成功
         </div>
     </div>
 
     <script>
-        // 切换tab
+        /**
+         * 切换标签页
+         * @param {string} tab - 标签页标识符
+         */
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
             // 实际应用中这里需要请求不同的数据
         }
 
-        // 显示模态框
+        /**
+         * 显示模态框
+         * @param {string} modalId - 模态框ID
+         */
         function showModal(modalId) {
             document.getElementById(modalId).style.display = 'flex';
         }
 
-        // 隐藏模态框
+        /**
+         * 隐藏模态框
+         * @param {string} modalId - 模态框ID
+         */
         function hideModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
         }
 
-        // 显示删除确认框
+        /**
+         * 显示删除确认框
+         */
         function showDeleteConfirm() {
             document.getElementById('deleteModal').style.display = 'flex';
         }
 
-        // 保存业务术语
+        /**
+         * 保存业务术语
+         */
         function saveTerminology() {
             hideModal('addModal');
             showToast('新建业务术语成功');
         }
 
-        // 更新业务术语
+        /**
+         * 更新业务术语
+         */
         function updateTerminology() {
             hideModal('editModal');
             showToast('更新业务术语成功');
         }
 
-        // 删除业务术语
+        /**
+         * 删除业务术语
+         */
         function deleteTerminology() {
             hideModal('deleteModal');
             showToast('删除业务术语成功');
         }
 
-        // 显示提示框
+        /**
+         * 显示提示框
+         * @param {string} message - 提示消息
+         */
         function showToast(message) {
             const toast = document.getElementById('toast');
             toast.textContent = message;
@@ -766,7 +883,9 @@
             }, 3000);
         }
 
-        // 处理类型变化
+        /**
+         * 处理类型变化
+         */
         function handleTypeChange() {
             const select = document.querySelector('.form-select[onchange="handleTypeChange()"]');
             const conditionGroup = document.getElementById('conditionGroup');
@@ -778,7 +897,9 @@
             }
         }
 
-        // 监听复选框变化
+        /**
+         * 监听复选框变化更新选中计数
+         */
         document.querySelectorAll('.checkbox-input').forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 const checkedCount = document.querySelectorAll('.indicator-item .checkbox-input:checked').length;

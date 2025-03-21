@@ -1,0 +1,2254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>业务术语管理系统</title>
+    <!-- 引入样式库 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-ui@2.15.13/lib/theme-chalk/index.css">
+    <!-- 自定义样式 -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, "Microsoft YaHei", sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            font-size: 14px;
+        }
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 220px;
+            height: 100%;
+            background-color: #fff;
+            border-right: 1px solid #e6e6e6;
+            overflow-y: auto;
+        }
+        .sidebar-header {
+            padding: 20px 15px;
+            border-bottom: 1px solid #e6e6e6;
+            display: flex;
+            align-items: center;
+        }
+        .sidebar-menu {
+            padding: 10px 0;
+        }
+        .sidebar-menu-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            color: #606266;
+            transition: all 0.3s;
+        }
+        .sidebar-menu-item:hover {
+            background-color: #f5f7fa;
+        }
+        .sidebar-menu-item.active {
+            background-color: #ecf5ff;
+            color: #409eff;
+            border-left: 3px solid #409eff;
+        }
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+        .page-header {
+            padding: 15px 20px;
+            background-color: #fff;
+            border-bottom: 1px solid #e6e6e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .page-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .page-content {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .search-bar {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            background-color: #fff;
+            border-radius: 4px;
+            padding: 15px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+        }
+        .search-input {
+            width: 100%;
+            position: relative;
+            max-width: 500px;
+            margin-right: 15px;
+        }
+        .search-input input {
+            width: 100%;
+            padding: 10px 15px 10px 40px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        .search-input input:focus {
+            border-color: #409eff;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+        }
+        .search-input i {
+            position: absolute;
+            left: 15px;
+            top: 12px;
+            color: #909399;
+        }
+        .filter-select {
+            min-width: 180px;
+            margin: 0 15px;
+        }
+        .filter-select select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            background-color: #fff;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23909399' d='M6 8.825L1.175 4 2.05 3.125 6 7.075 9.95 3.125 10.825 4z'/%3E%3C/svg%3E");
+            background-position: right 10px center;
+            background-repeat: no-repeat;
+            padding-right: 30px;
+        }
+        .filter-select select:focus {
+            border-color: #409eff;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+        }
+        .search-button {
+            background-color: #409eff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .search-button:hover {
+            background-color: #66b1ff;
+        }
+        .table-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .table th, .table td {
+            border-bottom: 1px solid #ebeef5;
+            padding: 15px;
+            text-align: left;
+        }
+        .table th {
+            background-color: #f5f7fa;
+            color: #606266;
+            font-weight: 500;
+        }
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+        .table tr:hover {
+            background-color: #f5f7fa;
+        }
+        .action-btn {
+            padding: 4px 8px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            margin-right: 5px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .edit-btn {
+            color: #409eff;
+        }
+        .delete-btn {
+            color: #f56c6c;
+        }
+        .pagination {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        .pagination-button {
+            min-width: 32px;
+            height: 32px;
+            line-height: 30px;
+            text-align: center;
+            margin: 0 5px;
+            background: #fff;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .pagination-button:hover:not(.pagination-button-active, .pagination-button-disabled) {
+            color: #409eff;
+            border-color: #c6e2ff;
+        }
+        .pagination-button-active {
+            background-color: #409eff;
+            color: #fff;
+            border-color: #409eff;
+        }
+        .pagination-button-disabled {
+            color: #c0c4cc;
+            cursor: not-allowed;
+        }
+        .pagination-text {
+            margin-left: 15px;
+            color: #606266;
+            font-size: 13px;
+        }
+        .tag {
+            display: inline-block;
+            padding: 2px 6px;
+            background-color: #ecf5ff;
+            color: #409eff;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: #fff;
+            width: 70%;
+            max-width: 800px;
+            border-radius: 4px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            max-height: 80vh;
+        }
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e6e6e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #909399;
+        }
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .modal-footer {
+            padding: 10px 20px;
+            border-top: 1px solid #e6e6e6;
+            text-align: right;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #409eff;
+        }
+        .textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .form-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background-color: #409eff;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: #66b1ff;
+        }
+        .btn-default {
+            background-color: #f5f7fa;
+            color: #606266;
+            border: 1px solid #dcdfe6;
+        }
+        .btn-default:hover {
+            background-color: #f0f0f0;
+        }
+        .btn-danger {
+            background-color: #f56c6c;
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background-color: #f78989;
+        }
+        .tab-container {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e6e6e6;
+        }
+        .tab {
+            display: inline-block;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: #606266;
+        }
+        .tab.active {
+            color: #409eff;
+            border-bottom-color: #409eff;
+        }
+        .related-indicators {
+            margin-top: 20px;
+            border: 1px solid #e6e6e6;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        .indicator-item {
+            padding: 6px 10px;
+            border-bottom: 1px solid #ebeef5;
+        }
+        .indicator-item:last-child {
+            border-bottom: none;
+        }
+        .checkbox-group {
+            margin-top: 10px;
+        }
+        .checkbox-item {
+            margin-right: 15px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+        .checkbox-input {
+            margin-right: 4px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 12px;
+            color: #fff;
+            background-color: #909399;
+            margin-left: 5px;
+        }
+        .badge-success {
+            background-color: #67c23a;
+        }
+        .indicator-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            background-color: #f0f9eb;
+            color: #67c23a;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+        }
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .required {
+            color: #f56c6c;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        .error-message {
+            color: #f56c6c;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .select-container {
+            position: relative;
+        }
+        .select-header {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+        }
+        .select-body {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: #fff;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .selected-items {
+            padding: 8px;
+        }
+        .drag-hint {
+            margin-bottom: 8px;
+        }
+        .available-items {
+            padding: 8px;
+        }
+        .item-header {
+            margin-bottom: 8px;
+        }
+        .indicator-list {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .indicator-item {
+            padding: 8px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            margin: 4px;
+            cursor: pointer;
+        }
+        .item-type {
+            margin-left: 4px;
+            color: #909399;
+        }
+        /* 表单验证样式 */
+        .required {
+            color: #f56c6c;
+            margin-left: 4px;
+        }
+        
+        .error-message {
+            display: none;
+            color: #f56c6c;
+            margin-top: 5px;
+        }
+        
+        .form-control.error, .form-select.error {
+            border-color: #f56c6c;
+        }
+        
+        /* 指标/维度选择器样式 */
+        .select-container {
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .select-header {
+            padding: 10px;
+            display: flex;
+            border-bottom: 1px solid #ebeef5;
+        }
+        
+        .select-header .form-control {
+            flex: 1;
+            margin-right: 10px;
+        }
+        
+        .select-body {
+            display: flex;
+            height: 300px;
+        }
+        
+        .selected-items, .available-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .selected-items {
+            border-right: 1px solid #ebeef5;
+            background-color: #f8f9fa;
+        }
+        
+        .drag-hint {
+            margin-bottom: 10px;
+            color: #606266;
+            font-size: 13px;
+        }
+        
+        .sortable-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .sortable-item {
+            padding: 8px 10px;
+            background-color: #fff;
+            border: 1px solid #ebeef5;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            cursor: move;
+        }
+        
+        .sortable-item .handle {
+            margin-right: 10px;
+            color: #909399;
+            cursor: move;
+        }
+        
+        .sortable-item .remove {
+            margin-left: auto;
+            color: #f56c6c;
+            cursor: pointer;
+        }
+        
+        .indicator-list {
+            margin-top: 10px;
+        }
+        
+        .item-header {
+            color: #606266;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+        
+        .indicator-item {
+            padding: 8px 10px;
+            border-bottom: 1px solid #ebeef5;
+            display: flex;
+            align-items: center;
+        }
+        
+        .indicator-item:last-child {
+            border-bottom: none;
+        }
+        
+        .item-type {
+            margin-left: auto;
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background-color: #f0f9eb;
+            color: #67c23a;
+        }
+        
+        .item-type.dimension {
+            background-color: #ecf5ff;
+            color: #409eff;
+        }
+        
+        /* 条件构建器样式 */
+        .condition-builder {
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .condition-tabs {
+            display: flex;
+            border-bottom: 1px solid #ebeef5;
+        }
+        
+        .condition-tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .condition-tab.active {
+            color: #409eff;
+            border-bottom-color: #409eff;
+        }
+        
+        .condition-content {
+            padding: 15px;
+        }
+        
+        .condition-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .condition-field, .condition-operator {
+            margin-right: 10px;
+        }
+        
+        .condition-field {
+            width: 35%;
+        }
+        
+        .condition-operator {
+            width: 20%;
+        }
+        
+        .condition-value {
+            width: 30%;
+            margin-right: 10px;
+        }
+        
+        .condition-add, .condition-remove {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            margin-right: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .condition-preview {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .condition-expression {
+            margin-top: 8px;
+            padding: 8px;
+            background-color: #fff;
+            border: 1px solid #ebeef5;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        
+        /* 描述自动生成样式 */
+        .auto-description {
+            margin-top: 5px;
+        }
+        
+        .description-preview {
+            padding: 15px;
+            background-color: #fff;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        
+        .description-content {
+            color: #606266;
+        }
+        
+        .description-list {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .description-item {
+            margin-bottom: 5px;
+        }
+        
+        .tag-indicator, .tag-dimension {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .tag-indicator {
+            background-color: #f0f9eb;
+            color: #67c23a;
+        }
+        
+        .tag-dimension {
+            background-color: #ecf5ff;
+            color: #409eff;
+        }
+        
+        .description-condition {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ebeef5;
+        }
+        
+        .condition-title {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .condition-code {
+            padding: 8px 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .description-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+        
+        .description-actions .btn {
+            margin-left: 10px;
+        }
+        
+        .refresh-icon, .edit-icon {
+            margin-right: 5px;
+        }
+        
+        /* 描述自动生成的增强样式 */
+        .description-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ebeef5;
+        }
+        
+        .description-icon {
+            font-size: 18px;
+            margin-right: 10px;
+            color: #409eff;
+        }
+        
+        .description-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #303133;
+        }
+        
+        .description-body {
+            padding: 0 5px;
+        }
+        
+        .description-section {
+            margin-bottom: 15px;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #606266;
+            margin-bottom: 8px;
+        }
+        
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .tag-indicator, .tag-dimension {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            border: 1px solid transparent;
+        }
+        
+        .tag-indicator {
+            background-color: #f0f9eb;
+            color: #67c23a;
+            border-color: #e1f3d8;
+        }
+        
+        .tag-dimension {
+            background-color: #ecf5ff;
+            color: #409eff;
+            border-color: #d9ecff;
+        }
+        
+        .condition-card {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 12px;
+            border-left: 3px solid #409eff;
+        }
+        
+        .condition-code {
+            font-family: monospace;
+            font-size: 13px;
+            color: #303133;
+            margin-bottom: 8px;
+            word-break: break-word;
+        }
+        
+        .condition-explain {
+            color: #909399;
+            font-size: 12px;
+            font-style: italic;
+        }
+        
+        .description-summary {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #ebeef5;
+            color: #606266;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .description-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin: 10px 0;
+        }
+        
+        .description-actions .btn {
+            margin-left: 10px;
+            display: flex;
+            align-items: center;
+            padding: 5px 10px;
+        }
+        
+        .refresh-icon, .edit-icon {
+            margin-right: 5px;
+            font-size: 12px;
+        }
+        
+        .description-editor {
+            min-height: 100px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h3>数据平台</h3>
+            </div>
+            <div class="sidebar-menu">
+                <div class="sidebar-menu-item">
+                    <span>管理中心</span>
+                </div>
+                <div class="sidebar-menu-item">指标管理</div>
+                <div class="sidebar-menu-item">维度管理</div>
+                <div class="sidebar-menu-item active">业务术语管理</div>
+                <div class="sidebar-menu-item">应用产品管理</div>
+            </div>
+        </div>
+
+        <!-- 主内容区域 -->
+        <div class="main-content">
+            <div class="page-header">
+                <h2 class="page-title">业务术语管理</h2>
+                <button class="btn btn-primary" onclick="showModal('addModal')">新建业务术语</button>
+            </div>
+            <div class="page-content">
+                <div class="tab-container">
+                    <div class="tab active" onclick="switchTab('all')">全部</div>
+                    <div class="tab" onclick="switchTab('community')">社区</div>
+                    <div class="tab" onclick="switchTab('trade')">交易</div>
+                    <div class="tab" onclick="switchTab('commercial')">商业化</div>
+                </div>
+                <div class="search-bar">
+                    <div class="search-input">
+                        <i class="search-icon">&#128269;</i>
+                        <input type="text" placeholder="请输入业务术语或描述搜索">
+                    </div>
+                    <div class="filter-select">
+                        <select>
+                            <option value="">类型：请选择</option>
+                            <option value="1">条件集合</option>
+                            <option value="2">字段集合</option>
+                        </select>
+                    </div>
+                    <button class="search-button">搜索</button>
+                </div>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;"><input type="checkbox"></th>
+                                <th>业务术语</th>
+                                <th>别名</th>
+                                <th>业务域</th>
+                                <th>类型</th>
+                                <th>描述</th>
+                                <th>关联数据集</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>bkfs流水</td>
+                                <td>巴克流水</td>
+                                <td>交易</td>
+                                <td>条件集合</td>
+                                <td>包含品牌广告流水、广告流水等多个指标</td>
+                                <td>
+                                    <span class="badge badge-success">5</span>
+                                </td>
+                                <td>
+                                    <button class="action-btn edit-btn" onclick="showModal('editModal')">编辑</button>
+                                    <button class="action-btn delete-btn" onclick="showDeleteConfirm()">删除</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>GMV相关指标</td>
+                                <td>-</td>
+                                <td>交易</td>
+                                <td>字段集合</td>
+                                <td>包含平台GMV、店铺GMV等相关指标</td>
+                                <td>
+                                    <span class="badge badge-success">3</span>
+                                </td>
+                                <td>
+                                    <button class="action-btn edit-btn" onclick="showModal('editModal')">编辑</button>
+                                    <button class="action-btn delete-btn" onclick="showDeleteConfirm()">删除</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>用户活跃度</td>
+                                <td>活跃用户</td>
+                                <td>社区</td>
+                                <td>条件集合</td>
+                                <td>包含DAU、MAU、用户留存率等指标</td>
+                                <td>
+                                    <span class="badge badge-success">7</span>
+                                </td>
+                                <td>
+                                    <button class="action-btn edit-btn" onclick="showModal('editModal')">编辑</button>
+                                    <button class="action-btn delete-btn" onclick="showDeleteConfirm()">删除</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>内容交互指标</td>
+                                <td>-</td>
+                                <td>社区</td>
+                                <td>字段集合</td>
+                                <td>包含点赞数、评论数、分享数等指标</td>
+                                <td>
+                                    <span class="badge badge-success">4</span>
+                                </td>
+                                <td>
+                                    <button class="action-btn edit-btn" onclick="showModal('editModal')">编辑</button>
+                                    <button class="action-btn delete-btn" onclick="showDeleteConfirm()">删除</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>广告投放效果</td>
+                                <td>广告效果</td>
+                                <td>商业化</td>
+                                <td>条件集合</td>
+                                <td>包含点击率、转化率、ROI等指标</td>
+                                <td>
+                                    <span class="badge badge-success">6</span>
+                                </td>
+                                <td>
+                                    <button class="action-btn edit-btn" onclick="showModal('editModal')">编辑</button>
+                                    <button class="action-btn delete-btn" onclick="showDeleteConfirm()">删除</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination">
+                    <button class="pagination-button pagination-button-disabled">上一页</button>
+                    <button class="pagination-button pagination-button-active">1</button>
+                    <button class="pagination-button">2</button>
+                    <button class="pagination-button">3</button>
+                    <button class="pagination-button">下一页</button>
+                    <span class="pagination-text">共20条，1/3页</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 新建业务术语模态框 -->
+        <div id="addModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">新建业务术语</h3>
+                    <button class="close-btn" onclick="hideModal('addModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">术语名称 <span class="required">*</span></label>
+                        <input type="text" class="form-control" id="term-name" placeholder="请输入业务术语名称">
+                        <div class="error-message" id="term-name-error">请输入业务术语名称</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">别名</label>
+                        <input type="text" class="form-control" placeholder="请输入别名，可选">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">业务域 <span class="required">*</span></label>
+                        <select class="form-select" id="business-domain">
+                            <option value="">请选择业务域</option>
+                            <option value="community">社区</option>
+                            <option value="trade">交易</option>
+                            <option value="commercial">商业化</option>
+                        </select>
+                        <div class="error-message" id="business-domain-error">请选择业务域</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">类型 <span class="required">*</span></label>
+                        <select class="form-select" id="term-type" onchange="handleTypeChange()">
+                            <option value="">请选择类型</option>
+                            <option value="condition">条件集合</option>
+                            <option value="field">字段集合</option>
+                        </select>
+                        <div class="error-message" id="term-type-error">请选择类型</div>
+                    </div>
+                    <div class="form-group" id="conditionGroup" style="display: none;">
+                        <label class="form-label">筛选条件 <span class="required">*</span></label>
+                        <div class="condition-builder">
+                            <div class="condition-tabs">
+                                <div class="condition-tab active" data-type="indicator">指标条件</div>
+                                <div class="condition-tab" data-type="dimension">维度条件</div>
+                            </div>
+                            <div class="condition-content">
+                                <div class="condition-panel" id="indicator-conditions">
+                                    <div class="condition-row">
+                                        <select class="form-select condition-field">
+                                            <option value="">请选择指标</option>
+                                            <option value="ad_revenue">广告流水</option>
+                                            <option value="brand_revenue">品牌广告流水</option>
+                                            <option value="search_revenue">搜索广告流水</option>
+                                        </select>
+                                        <select class="form-select condition-operator">
+                                            <option value="=">=</option>
+                                            <option value=">">></option>
+                                            <option value="<"><</option>
+                                            <option value=">=">>=</option>
+                                            <option value="<="><=</option>
+                                            <option value="!=">!=</option>
+                                        </select>
+                                        <input type="text" class="form-control condition-value" placeholder="请输入值">
+                                        <button class="btn btn-default condition-add">+</button>
+                                        <button class="btn btn-default condition-remove">-</button>
+                                    </div>
+                                </div>
+                                <div class="condition-panel" id="dimension-conditions" style="display: none;">
+                                    <div class="condition-row">
+                                        <select class="form-select condition-field">
+                                            <option value="">请选择维度</option>
+                                            <option value="platform_type">平台类型</option>
+                                            <option value="ad_position">广告位置</option>
+                                            <option value="category_id">类目ID</option>
+                                        </select>
+                                        <select class="form-select condition-operator">
+                                            <option value="=">等于</option>
+                                            <option value="!=">不等于</option>
+                                            <option value="IN">包含于</option>
+                                            <option value="NOT IN">不包含于</option>
+                                            <option value="LIKE">模糊匹配</option>
+                                        </select>
+                                        <input type="text" class="form-control condition-value" placeholder="请输入值，多个值用逗号分隔">
+                                        <button class="btn btn-default condition-add">+</button>
+                                        <button class="btn btn-default condition-remove">-</button>
+                                    </div>
+                                </div>
+                                <div class="condition-preview">
+                                    <label>条件预览</label>
+                                    <div class="condition-expression" id="condition-preview-text">
+                                        <!-- 条件表达式将动态显示在这里 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="error-message" id="condition-error">请配置筛选条件</div>
+                    </div>
+                    <div class="form-group" id="indicatorGroup" style="display: none;">
+                        <label class="form-label">关联指标/维度 <span class="required">*</span></label>
+                        <div class="select-container">
+                            <div class="select-header">
+                                <input type="text" class="form-control" placeholder="搜索指标/维度" id="indicator-search">
+                                <button class="btn btn-default search-btn">搜索</button>
+                            </div>
+                            <div class="select-body">
+                                <div class="selected-items">
+                                    <div class="drag-hint">已选择 <span id="selected-count">0</span> 个，可拖动排序</div>
+                                    <ul id="selected-indicators" class="sortable-list">
+                                        <!-- 已选项将动态插入此处 -->
+                                    </ul>
+                                </div>
+                                <div class="available-items">
+                                    <div class="item-header">可选指标/维度</div>
+                                    <div class="indicator-list">
+                                        <div class="indicator-item" draggable="true" data-id="1">
+                                            <input type="checkbox" id="indicator1" class="checkbox-input">
+                                            <label for="indicator1">品牌广告流水</label>
+                                            <span class="item-type">指标</span>
+                                        </div>
+                                        <div class="indicator-item" draggable="true" data-id="2">
+                                            <input type="checkbox" id="indicator2" class="checkbox-input">
+                                            <label for="indicator2">广告流水</label>
+                                            <span class="item-type">指标</span>
+                                        </div>
+                                        <div class="indicator-item" draggable="true" data-id="3">
+                                            <input type="checkbox" id="indicator3" class="checkbox-input">
+                                            <label for="indicator3">搜索广告流水</label>
+                                            <span class="item-type">指标</span>
+                                        </div>
+                                        <div class="indicator-item" draggable="true" data-id="4">
+                                            <input type="checkbox" id="indicator4" class="checkbox-input">
+                                            <label for="indicator4">广告平台</label>
+                                            <span class="item-type">维度</span>
+                                        </div>
+                                        <div class="indicator-item" draggable="true" data-id="5">
+                                            <input type="checkbox" id="indicator5" class="checkbox-input">
+                                            <label for="indicator5">广告位置</label>
+                                            <span class="item-type">维度</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="error-message" id="indicators-error">请至少选择一个指标/维度</div>
+                    </div>
+                    <div class="form-group" id="description-group">
+                        <label class="form-label">描述</label>
+                        <div class="auto-description">
+                            <div class="description-preview">
+                                <div class="description-content">
+                                    包含以下指标与维度：
+                                    <ul class="description-list">
+                                        <li class="description-item"><span class="tag-indicator">品牌广告流水</span></li>
+                                        <li class="description-item"><span class="tag-indicator">广告流水</span></li>
+                                        <li class="description-item"><span class="tag-dimension">平台类型</span></li>
+                                    </ul>
+                                    <div class="description-condition">
+                                        <div class="condition-title">筛选条件：</div>
+                                        <div class="condition-code">platform_type = 'bkfs' AND category_id IN (101, 102, 103)</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="description-actions">
+                                <button class="btn btn-default btn-sm" id="refresh-description">
+                                    <i class="refresh-icon">↻</i> 刷新描述
+                                </button>
+                                <button class="btn btn-default btn-sm" id="edit-description">
+                                    <i class="edit-icon">✎</i> 手动编辑
+                                </button>
+                            </div>
+                            <textarea class="form-control textarea description-editor" style="display: none;" placeholder="手动编辑描述信息"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">应用数据集</label>
+                        <div class="related-indicators">
+                            <p>系统已自动获取与所选指标关联的数据集：</p>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="dataset1" class="checkbox-input" checked>
+                                    <label for="dataset1">广告业务数据集</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="dataset2" class="checkbox-input" checked>
+                                    <label for="dataset2">电商交易数据集</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="dataset3" class="checkbox-input" checked>
+                                    <label for="dataset3">流量分析数据集</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-default" onclick="hideModal('addModal')">取消</button>
+                    <button class="btn btn-primary" onclick="saveTerminology()">保存</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 编辑业务术语模态框 -->
+        <div id="editModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">编辑业务术语</h3>
+                    <button class="close-btn" onclick="hideModal('editModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">术语名称 <span class="required">*</span></label>
+                        <input type="text" class="form-control" id="edit-term-name" value="bkfs流水">
+                        <div class="error-message" id="edit-term-name-error">请输入业务术语名称</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">别名</label>
+                        <input type="text" class="form-control" id="edit-term-alias" value="巴克流水">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">业务域 <span class="required">*</span></label>
+                        <select class="form-select" id="edit-business-domain">
+                            <option value="community">社区</option>
+                            <option value="trade" selected>交易</option>
+                            <option value="commercial">商业化</option>
+                        </select>
+                        <div class="error-message" id="edit-business-domain-error">请选择业务域</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">类型 <span class="required">*</span></label>
+                        <select class="form-select" id="edit-term-type" onchange="handleEditTypeChange()">
+                            <option value="condition" selected>条件集合</option>
+                            <option value="field">字段集合</option>
+                        </select>
+                        <div class="error-message" id="edit-term-type-error">请选择类型</div>
+                    </div>
+                    
+                    <!-- 条件集合相关配置，与新建模态框类似 -->
+                    <div class="form-group" id="edit-conditionGroup">
+                        <label class="form-label">筛选条件 <span class="required">*</span></label>
+                        <div class="condition-builder">
+                            <div class="condition-tabs">
+                                <div class="condition-tab active" data-type="indicator">指标条件</div>
+                                <div class="condition-tab" data-type="dimension">维度条件</div>
+                            </div>
+                            <div class="condition-content">
+                                <div class="condition-panel" id="edit-indicator-conditions">
+                                    <div class="condition-row">
+                                        <select class="form-select condition-field">
+                                            <option value="">请选择指标</option>
+                                            <option value="ad_revenue" selected>广告流水</option>
+                                            <option value="brand_revenue">品牌广告流水</option>
+                                            <option value="search_revenue">搜索广告流水</option>
+                                        </select>
+                                        <select class="form-select condition-operator">
+                                            <option value="=" selected>=</option>
+                                            <option value=">">></option>
+                                            <option value="<"><</option>
+                                            <option value=">=">>=</option>
+                                            <option value="<="><=</option>
+                                            <option value="!=">!=</option>
+                                        </select>
+                                        <input type="text" class="form-control condition-value" value="100">
+                                        <button class="btn btn-default condition-add">+</button>
+                                        <button class="btn btn-default condition-remove">-</button>
+                                    </div>
+                                </div>
+                                <div class="condition-panel" id="edit-dimension-conditions" style="display: none;">
+                                    <div class="condition-row">
+                                        <select class="form-select condition-field">
+                                            <option value="">请选择维度</option>
+                                            <option value="platform_type" selected>平台类型</option>
+                                            <option value="ad_position">广告位置</option>
+                                            <option value="category_id">类目ID</option>
+                                        </select>
+                                        <select class="form-select condition-operator">
+                                            <option value="=" selected>等于</option>
+                                            <option value="!=">不等于</option>
+                                            <option value="IN">包含于</option>
+                                            <option value="NOT IN">不包含于</option>
+                                            <option value="LIKE">模糊匹配</option>
+                                        </select>
+                                        <input type="text" class="form-control condition-value" value="bkfs">
+                                        <button class="btn btn-default condition-add">+</button>
+                                        <button class="btn btn-default condition-remove">-</button>
+                                    </div>
+                                </div>
+                                <div class="condition-preview">
+                                    <label>条件预览</label>
+                                    <div class="condition-expression" id="edit-condition-preview-text">
+                                        ad_revenue = 100 AND platform_type = 'bkfs'
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="error-message" id="edit-condition-error">请配置筛选条件</div>
+                    </div>
+                    
+                    <div class="form-group" id="edit-indicatorGroup">
+                        <label class="form-label">关联指标/维度 <span class="required">*</span></label>
+                        <div class="select-container">
+                            <div class="select-header">
+                                <input type="text" class="form-control" placeholder="搜索指标/维度" id="edit-indicator-search">
+                                <button class="btn btn-default search-btn">搜索</button>
+                            </div>
+                            <div class="select-body">
+                                <div class="selected-items">
+                                    <div class="drag-hint">已选择 <span id="edit-selected-count">6</span> 个，可拖动排序</div>
+                                    <ul id="edit-selected-indicators" class="sortable-list">
+                                        <li class="sortable-item" draggable="true" data-id="1">
+                                            <span class="handle">⋮⋮</span>
+                                            <span class="item-name">品牌广告流水</span>
+                                            <span class="item-type">指标</span>
+                                            <span class="remove" onclick="removeEditSelectedItem(this, 1)">×</span>
+                                        </li>
+                                        <li class="sortable-item" draggable="true" data-id="2">
+                                            <span class="handle">⋮⋮</span>
+                                            <span class="item-name">广告流水</span>
+                                            <span class="item-type">指标</span>
+                                            <span class="remove" onclick="removeEditSelectedItem(this, 2)">×</span>
+                                        </li>
+                                        <li class="sortable-item" draggable="true" data-id="3">
+                                            <span class="handle">⋮⋮</span>
+                                            <span class="item-name">搜索广告流水</span>
+                                            <span class="item-type">指标</span>
+                                            <span class="remove" onclick="removeEditSelectedItem(this, 3)">×</span>
+                                        </li>
+                                        <li class="sortable-item" draggable="true" data-id="4">
+                                            <span class="handle">⋮⋮</span>
+                                            <span class="item-name">广告平台</span>
+                                            <span class="item-type dimension">维度</span>
+                                            <span class="remove" onclick="removeEditSelectedItem(this, 4)">×</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="available-items">
+                                    <div class="item-header">可选指标/维度</div>
+                                    <div class="indicator-list">
+                                        <div class="indicator-item" draggable="true" data-id="1">
+                                            <input type="checkbox" id="edit_indicator1" class="checkbox-input" checked>
+                                            <label for="edit_indicator1">品牌广告流水</label>
+                                            <span class="item-type">指标</span>
+                                        </div>
+                                        <div class="indicator-item" draggable="true" data-id="2">
+                                            <input type="checkbox" id="edit_indicator2" class="checkbox-input" checked>
+                                            <label for="edit_indicator2">广告流水</label>
+                                            <span class="item-type">指标</span>
+                                        </div>
+                                        <div class="indicator-item" draggable="true" data-id="3">
+                                            <input type="checkbox" id="edit_indicator3" class="checkbox-input" checked>
+                                            <label for="edit_indicator3">搜索广告流水</label>
+                                            <span class="item-type">指标</span>
+                                        </div>
+                                        <div class="indicator-item" draggable="true" data-id="4">
+                                            <input type="checkbox" id="edit_indicator4" class="checkbox-input" checked>
+                                            <label for="edit_indicator4">广告平台</label>
+                                            <span class="item-type">维度</span>
+                                        </div>
+                                        <div class="indicator-item" draggable="true" data-id="5">
+                                            <input type="checkbox" id="edit_indicator5" class="checkbox-input">
+                                            <label for="edit_indicator5">广告位置</label>
+                                            <span class="item-type">维度</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="error-message" id="edit-indicators-error">请至少选择一个指标/维度</div>
+                    </div>
+                    
+                    <!-- 描述自动生成的美化版本 -->
+                    <div class="form-group" id="edit-description-group">
+                        <label class="form-label">描述</label>
+                        <div class="auto-description">
+                            <div class="description-preview">
+                                <div class="description-content">
+                                    <div class="description-header">
+                                        <i class="description-icon">📊</i>
+                                        <span class="description-title">业务术语概览</span>
+                                    </div>
+                                    <div class="description-body">
+                                        <div class="description-section">
+                                            <div class="section-title">包含指标</div>
+                                            <div class="tag-container">
+                                                <span class="tag-indicator">品牌广告流水</span>
+                                                <span class="tag-indicator">广告流水</span>
+                                                <span class="tag-indicator">搜索广告流水</span>
+                                            </div>
+                                        </div>
+                                        <div class="description-section">
+                                            <div class="section-title">包含维度</div>
+                                            <div class="tag-container">
+                                                <span class="tag-dimension">广告平台</span>
+                                            </div>
+                                        </div>
+                                        <div class="description-section">
+                                            <div class="section-title">筛选条件</div>
+                                            <div class="condition-card">
+                                                <div class="condition-code">ad_revenue = 100 AND platform_type = 'bkfs'</div>
+                                                <div class="condition-explain">广告流水等于100且平台类型为bkfs</div>
+                                            </div>
+                                        </div>
+                                        <div class="description-summary">
+                                            该业务术语包含3个指标和1个维度，用于分析特定条件下的广告流水数据。
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="description-actions">
+                                <button class="btn btn-default btn-sm" id="edit-refresh-description">
+                                    <i class="refresh-icon">↻</i> 刷新描述
+                                </button>
+                                <button class="btn btn-default btn-sm" id="edit-toggle-description">
+                                    <i class="edit-icon">✎</i> 手动编辑
+                                </button>
+                            </div>
+                            <textarea class="form-control textarea description-editor" id="edit-description-textarea" style="display: none;" placeholder="手动编辑描述信息">包含品牌广告流水、广告流水、搜索广告流水等多个指标和广告平台维度，筛选条件为广告流水等于100且平台类型为bkfs。</textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">应用数据集</label>
+                        <div class="related-indicators">
+                            <p>系统已自动获取与所选指标关联的数据集：</p>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="edit_dataset1" class="checkbox-input" checked>
+                                    <label for="edit_dataset1">广告业务数据集</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="edit_dataset2" class="checkbox-input" checked>
+                                    <label for="edit_dataset2">电商交易数据集</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="edit_dataset3" class="checkbox-input" checked>
+                                    <label for="edit_dataset3">流量分析数据集</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="edit_dataset4" class="checkbox-input" checked>
+                                    <label for="edit_dataset4">用户行为数据集</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="edit_dataset5" class="checkbox-input" checked>
+                                    <label for="edit_dataset5">转化漏斗数据集</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-default" onclick="hideModal('editModal')">取消</button>
+                    <button class="btn btn-primary" onclick="updateTerminology()">保存</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 删除确认模态框 -->
+        <div id="deleteModal" class="modal" style="display: none;">
+            <div class="modal-content" style="width: 400px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">确认删除</h3>
+                    <button class="close-btn" onclick="hideModal('deleteModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>确定要删除该业务术语吗？删除后不可恢复。</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-default" onclick="hideModal('deleteModal')">取消</button>
+                    <button class="btn btn-danger" onclick="deleteTerminology()">删除</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 提示框 -->
+        <div id="toast" style="position: fixed; top: 20px; right: 20px; background-color: #67c23a; color: #fff; padding: 10px 20px; border-radius: 4px; display: none; z-index: 2000; box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);">
+            操作成功
+        </div>
+    </div>
+
+    <script>
+        /**
+         * 切换标签页
+         * @param {string} tab - 标签页标识符
+         */
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+            // 实际应用中这里需要请求不同的数据
+        }
+
+        /**
+         * 显示模态框
+         * @param {string} modalId - 模态框ID
+         */
+        function showModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        /**
+         * 隐藏模态框
+         * @param {string} modalId - 模态框ID
+         */
+        function hideModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        /**
+         * 显示删除确认框
+         */
+        function showDeleteConfirm() {
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+
+        /**
+         * 保存业务术语
+         */
+        function saveTerminology() {
+            hideModal('addModal');
+            showToast('新建业务术语成功');
+        }
+
+        /**
+         * 更新业务术语
+         */
+        function updateTerminology() {
+            hideModal('editModal');
+            showToast('更新业务术语成功');
+        }
+
+        /**
+         * 删除业务术语
+         */
+        function deleteTerminology() {
+            hideModal('deleteModal');
+            showToast('删除业务术语成功');
+        }
+
+        /**
+         * 显示提示框
+         * @param {string} message - 提示消息
+         */
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        /**
+         * 处理类型变化
+         */
+        function handleTypeChange() {
+            const select = document.querySelector('.form-select[onchange="handleTypeChange()"]');
+            const conditionGroup = document.getElementById('conditionGroup');
+            
+            if (select.value === 'condition') {
+                conditionGroup.style.display = 'block';
+            } else {
+                conditionGroup.style.display = 'none';
+            }
+        }
+
+        /**
+         * 监听复选框变化更新选中计数
+         */
+        document.querySelectorAll('.checkbox-input').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const checkedCount = document.querySelectorAll('.indicator-item .checkbox-input:checked').length;
+                document.getElementById('selected-count').textContent = checkedCount;
+            });
+        });
+
+        /**
+         * 处理编辑类型变化
+         */
+        function handleEditTypeChange() {
+            const select = document.querySelector('.form-select[onchange="handleEditTypeChange()"]');
+            const editConditionGroup = document.getElementById('edit-conditionGroup');
+            
+            if (select.value === 'condition') {
+                editConditionGroup.style.display = 'block';
+            } else {
+                editConditionGroup.style.display = 'none';
+            }
+        }
+
+        /**
+         * 移除编辑选中的指标
+         * @param {Element} item - 被移除的指标元素
+         * @param {number} id - 被移除指标的ID
+         */
+        function removeEditSelectedItem(item, id) {
+            // 实现移除逻辑
+        }
+
+        /**
+         * 更新编辑表单中的描述预览
+         */
+        function updateEditDescriptionPreview() {
+            const selectedItems = document.querySelectorAll('#edit-selected-indicators .sortable-item');
+            const conditionExpression = document.getElementById('edit-condition-preview-text').textContent;
+            const descriptionContent = document.querySelector('#editModal .description-content');
+            
+            // 先清空预览内容
+            descriptionContent.innerHTML = '';
+            
+            // 构建描述头部
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'description-header';
+            headerDiv.innerHTML = `
+                <i class="description-icon">📊</i>
+                <span class="description-title">业务术语概览</span>
+            `;
+            descriptionContent.appendChild(headerDiv);
+            
+            // 构建描述主体
+            const bodyDiv = document.createElement('div');
+            bodyDiv.className = 'description-body';
+            
+            // 分离指标和维度
+            let indicators = [];
+            let dimensions = [];
+            
+            selectedItems.forEach(item => {
+                const name = item.querySelector('.item-name').textContent;
+                const type = item.querySelector('.item-type').textContent;
+                
+                if (type.includes('维度')) {
+                    dimensions.push(name);
+                } else {
+                    indicators.push(name);
+                }
+            });
+            
+            // 添加指标部分
+            if (indicators.length > 0) {
+                const indicatorSection = document.createElement('div');
+                indicatorSection.className = 'description-section';
+                indicatorSection.innerHTML = `
+                    <div class="section-title">包含指标</div>
+                    <div class="tag-container">
+                        ${indicators.map(name => `<span class="tag-indicator">${name}</span>`).join('')}
+                    </div>
+                `;
+                bodyDiv.appendChild(indicatorSection);
+            }
+            
+            // 添加维度部分
+            if (dimensions.length > 0) {
+                const dimensionSection = document.createElement('div');
+                dimensionSection.className = 'description-section';
+                dimensionSection.innerHTML = `
+                    <div class="section-title">包含维度</div>
+                    <div class="tag-container">
+                        ${dimensions.map(name => `<span class="tag-dimension">${name}</span>`).join('')}
+                    </div>
+                `;
+                bodyDiv.appendChild(dimensionSection);
+            }
+            
+            // 添加条件部分
+            if (conditionExpression) {
+                const conditionSection = document.createElement('div');
+                conditionSection.className = 'description-section';
+                
+                // 尝试解析条件生成人性化解释
+                let explainText = formatConditionExplanation(conditionExpression);
+                
+                conditionSection.innerHTML = `
+                    <div class="section-title">筛选条件</div>
+                    <div class="condition-card">
+                        <div class="condition-code">${conditionExpression}</div>
+                        <div class="condition-explain">${explainText}</div>
+                    </div>
+                `;
+                bodyDiv.appendChild(conditionSection);
+            }
+            
+            // 添加总结
+            if (indicators.length > 0 || dimensions.length > 0) {
+                const summarySection = document.createElement('div');
+                summarySection.className = 'description-summary';
+                
+                // 生成业务术语名称
+                const termName = document.getElementById('edit-term-name').value || '';
+                
+                let summaryText = '';
+                if (termName) {
+                    summaryText = `"${termName}"是一个`;
+                } else {
+                    summaryText = `该业务术语是一个`;
+                }
+                
+                if (indicators.length > 0 && dimensions.length > 0) {
+                    summaryText += `包含${indicators.length}个指标和${dimensions.length}个维度的集合`;
+                } else if (indicators.length > 0) {
+                    summaryText += `包含${indicators.length}个指标的集合`;
+                } else if (dimensions.length > 0) {
+                    summaryText += `包含${dimensions.length}个维度的集合`;
+                }
+                
+                if (conditionExpression) {
+                    summaryText += `，通过特定条件筛选相关数据`;
+                }
+                
+                summaryText += '。';
+                
+                summarySection.textContent = summaryText;
+                bodyDiv.appendChild(summarySection);
+            }
+            
+            descriptionContent.appendChild(bodyDiv);
+        }
+        
+        /**
+         * 格式化条件表达式为人性化解释
+         * @param {string} expression - 条件表达式
+         * @returns {string} 人性化解释
+         */
+        function formatConditionExplanation(expression) {
+            // 简单的条件解释逻辑
+            if (!expression) return '';
+            
+            // 替换常见操作符
+            let explanation = expression
+                .replace(/=/g, '等于')
+                .replace(/>/g, '大于')
+                .replace(/</g, '小于')
+                .replace(/>=/g, '大于等于')
+                .replace(/<=/g, '小于等于')
+                .replace(/!=/g, '不等于')
+                .replace(/AND/g, '且')
+                .replace(/OR/g, '或')
+                .replace(/IN/g, '包含于')
+                .replace(/NOT IN/g, '不包含于')
+                .replace(/LIKE/g, '类似于');
+            
+            // 匹配字段名称并替换为更友好的文本
+            const fieldMap = {
+                'ad_revenue': '广告流水',
+                'brand_revenue': '品牌广告流水',
+                'search_revenue': '搜索广告流水',
+                'platform_type': '平台类型',
+                'ad_position': '广告位置',
+                'category_id': '类目ID'
+            };
+            
+            for (const [field, label] of Object.entries(fieldMap)) {
+                explanation = explanation.replace(new RegExp(field, 'g'), label);
+            }
+            
+            return explanation;
+        }
+        
+        /**
+         * 表单验证
+         * @returns {boolean} 验证结果
+         */
+        function validateForm(mode = 'add') {
+            let isValid = true;
+            const prefix = mode === 'edit' ? 'edit-' : '';
+            
+            // 验证术语名称
+            const termName = document.getElementById(`${prefix}term-name`);
+            const termNameError = document.getElementById(`${prefix}term-name-error`);
+            if (!termName.value.trim()) {
+                termName.classList.add('error');
+                termNameError.style.display = 'block';
+                isValid = false;
+            } else {
+                termName.classList.remove('error');
+                termNameError.style.display = 'none';
+            }
+            
+            // 验证业务域
+            const businessDomain = document.getElementById(`${prefix}business-domain`);
+            const businessDomainError = document.getElementById(`${prefix}business-domain-error`);
+            if (!businessDomain.value) {
+                businessDomain.classList.add('error');
+                businessDomainError.style.display = 'block';
+                isValid = false;
+            } else {
+                businessDomain.classList.remove('error');
+                businessDomainError.style.display = 'none';
+            }
+            
+            // 验证类型
+            const termType = document.getElementById(`${prefix}term-type`);
+            const termTypeError = document.getElementById(`${prefix}term-type-error`);
+            if (!termType.value) {
+                termType.classList.add('error');
+                termTypeError.style.display = 'block';
+                isValid = false;
+            } else {
+                termType.classList.remove('error');
+                termTypeError.style.display = 'none';
+                
+                // 根据类型验证相关字段
+                if (termType.value === 'condition') {
+                    // 验证条件
+                    const conditionPreview = document.getElementById(`${prefix}condition-preview-text`);
+                    const conditionError = document.getElementById(`${prefix}condition-error`);
+                    if (!conditionPreview.textContent.trim()) {
+                        conditionError.style.display = 'block';
+                        isValid = false;
+                    } else {
+                        conditionError.style.display = 'none';
+                    }
+                }
+                
+                // 验证指标/维度
+                const selectedCount = document.getElementById(`${prefix}selected-count`);
+                const indicatorsError = document.getElementById(`${prefix}indicators-error`);
+                if (parseInt(selectedCount.textContent) === 0) {
+                    indicatorsError.style.display = 'block';
+                    isValid = false;
+                } else {
+                    indicatorsError.style.display = 'none';
+                }
+            }
+            
+            return isValid;
+        }
+        
+        /**
+         * 设置条件标签页切换
+         */
+        function setupConditionTabs() {
+            // 处理新建表单中的标签页
+            setupTabsInContainer('addModal');
+            
+            // 处理编辑表单中的标签页
+            setupTabsInContainer('editModal');
+        }
+        
+        /**
+         * 在指定容器内设置标签页
+         * @param {string} containerId - 容器ID
+         */
+        function setupTabsInContainer(containerId) {
+            const tabs = document.querySelectorAll(`#${containerId} .condition-tab`);
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 获取当前容器
+                    const container = this.closest('.condition-builder');
+                    
+                    // 移除所有active类
+                    container.querySelectorAll('.condition-tab').forEach(t => t.classList.remove('active'));
+                    container.querySelectorAll('.condition-panel').forEach(p => p.style.display = 'none');
+                    
+                    // 添加active类到当前点击的标签
+                    this.classList.add('active');
+                    
+                    // 显示对应的面板
+                    const type = this.getAttribute('data-type');
+                    const panelId = containerId === 'editModal' ? `edit-${type}-conditions` : `${type}-conditions`;
+                    document.getElementById(panelId).style.display = 'block';
+                });
+            });
+        }
+        
+        /**
+         * 设置条件构建器
+         */
+        function setupConditionBuilder() {
+            // 处理新建表单中的条件构建器
+            setupBuilderInContainer('addModal');
+            
+            // 处理编辑表单中的条件构建器
+            setupBuilderInContainer('editModal');
+        }
+        
+        /**
+         * 在指定容器内设置条件构建器
+         * @param {string} containerId - 容器ID
+         */
+        function setupBuilderInContainer(containerId) {
+            const container = document.getElementById(containerId);
+            
+            // 添加条件行
+            container.addEventListener('click', function(e) {
+                if (e.target.classList.contains('condition-add')) {
+                    const row = e.target.closest('.condition-row');
+                    const panel = row.parentNode;
+                    const newRow = row.cloneNode(true);
+                    
+                    // 清空新行的值
+                    newRow.querySelectorAll('select, input').forEach(el => {
+                        if (el.tagName === 'SELECT') {
+                            el.selectedIndex = 0;
+                        } else {
+                            el.value = '';
+                        }
+                    });
+                    
+                    panel.appendChild(newRow);
+                    updateConditionPreviewInContainer(containerId);
+                }
+            });
+            
+            // 删除条件行
+            container.addEventListener('click', function(e) {
+                if (e.target.classList.contains('condition-remove')) {
+                    const row = e.target.closest('.condition-row');
+                    const panel = row.parentNode;
+                    
+                    // 确保至少保留一行
+                    if (panel.querySelectorAll('.condition-row').length > 1) {
+                        panel.removeChild(row);
+                        updateConditionPreviewInContainer(containerId);
+                    }
+                }
+            });
+            
+            // 监听条件字段变化，更新预览
+            container.addEventListener('change', function(e) {
+                if (e.target.classList.contains('condition-field') || 
+                    e.target.classList.contains('condition-operator')) {
+                    updateConditionPreviewInContainer(containerId);
+                }
+            });
+            
+            container.addEventListener('input', function(e) {
+                if (e.target.classList.contains('condition-value')) {
+                    updateConditionPreviewInContainer(containerId);
+                }
+            });
+        }
+        
+        /**
+         * 更新指定容器中的条件预览
+         * @param {string} containerId - 容器ID
+         */
+        function updateConditionPreviewInContainer(containerId) {
+            const prefix = containerId === 'editModal' ? 'edit-' : '';
+            
+            const indicatorRows = document.querySelectorAll(`#${prefix}indicator-conditions .condition-row`);
+            const dimensionRows = document.querySelectorAll(`#${prefix}dimension-conditions .condition-row`);
+            const previewElement = document.getElementById(`${prefix}condition-preview-text`);
+            
+            let conditions = [];
+            
+            // 处理指标条件
+            indicatorRows.forEach(row => {
+                const field = row.querySelector('.condition-field').value;
+                const operator = row.querySelector('.condition-operator').value;
+                const value = row.querySelector('.condition-value').value;
+                
+                if (field && operator && value) {
+                    if (isNaN(value)) {
+                        conditions.push(`${field} ${operator} '${value}'`);
+                    } else {
+                        conditions.push(`${field} ${operator} ${value}`);
+                    }
+                }
+            });
+            
+            // 处理维度条件
+            dimensionRows.forEach(row => {
+                const field = row.querySelector('.condition-field').value;
+                const operator = row.querySelector('.condition-operator').value;
+                const value = row.querySelector('.condition-value').value;
+                
+                if (field && operator && value) {
+                    if (operator === 'IN' || operator === 'NOT IN') {
+                        const values = value.split(',').map(v => `'${v.trim()}'`).join(', ');
+                        conditions.push(`${field} ${operator} (${values})`);
+                    } else if (operator === 'LIKE') {
+                        conditions.push(`${field} ${operator} '%${value}%'`);
+                    } else {
+                        conditions.push(`${field} ${operator} '${value}'`);
+                    }
+                }
+            });
+            
+            previewElement.textContent = conditions.join(' AND ');
+            
+            // 同时更新描述预览
+            if (containerId === 'editModal') {
+                updateEditDescriptionPreview();
+            } else {
+                updateDescriptionPreview();
+            }
+        }
+        
+        /**
+         * 设置指标/维度选择和排序
+         */
+        function setupIndicatorSelection() {
+            // 处理新建表单中的选择
+            setupSelectionInContainer('addModal');
+            
+            // 处理编辑表单中的选择
+            setupSelectionInContainer('editModal');
+        }
+        
+        /**
+         * 在指定容器内设置指标/维度选择
+         * @param {string} containerId - 容器ID
+         */
+        function setupSelectionInContainer(containerId) {
+            const prefix = containerId === 'editModal' ? 'edit_' : '';
+            const selectedIdPrefix = containerId === 'editModal' ? 'edit-' : '';
+            
+            const container = document.getElementById(containerId);
+            
+            // 复选框选择
+            container.addEventListener('change', function(e) {
+                if (e.target.classList.contains('checkbox-input') && e.target.id.startsWith(prefix)) {
+                    const item = e.target.closest('.indicator-item');
+                    const id = item.getAttribute('data-id');
+                    const label = item.querySelector('label').textContent;
+                    const type = item.querySelector('.item-type').textContent;
+                    
+                    const selectedList = document.getElementById(`${selectedIdPrefix}selected-indicators`);
+                    
+                    if (e.target.checked) {
+                        // 添加到已选列表
+                        const li = document.createElement('li');
+                        li.className = 'sortable-item';
+                        li.setAttribute('data-id', id);
+                        li.setAttribute('draggable', 'true');
+                        li.innerHTML = `
+                            <span class="handle">⋮⋮</span>
+                            <span class="item-name">${label}</span>
+                            <span class="item-type ${type === '维度' ? 'dimension' : ''}">${type}</span>
+                            <span class="remove" onclick="removeSelectedItem(this, ${id}, '${containerId}')">×</span>
+                        `;
+                        selectedList.appendChild(li);
+                    } else {
+                        // 从已选列表中移除
+                        const selectedItem = selectedList.querySelector(`[data-id="${id}"]`);
+                        if (selectedItem) {
+                            selectedList.removeChild(selectedItem);
+                        }
+                    }
+                    
+                    // 更新已选计数
+                    updateSelectedCount(containerId);
+                    
+                    // 更新描述预览
+                    if (containerId === 'editModal') {
+                        updateEditDescriptionPreview();
+                    } else {
+                        updateDescriptionPreview();
+                    }
+                }
+            });
+            
+            // 设置排序功能
+            setupSortableInContainer(containerId);
+        }
+        
+        /**
+         * 在指定容器内设置排序功能
+         * @param {string} containerId - 容器ID
+         */
+        function setupSortableInContainer(containerId) {
+            const selectedIdPrefix = containerId === 'editModal' ? 'edit-' : '';
+            const selectedList = document.getElementById(`${selectedIdPrefix}selected-indicators`);
+            
+            // 这里使用简单的实现，实际项目中建议使用Sortable.js等库
+            let draggedItem = null;
+            
+            document.addEventListener('dragstart', function(e) {
+                if (e.target.classList.contains('sortable-item') && 
+                    e.target.closest(`#${containerId}`)) {
+                    draggedItem = e.target;
+                    setTimeout(() => {
+                        e.target.style.opacity = '0.5';
+                    }, 0);
+                }
+            });
+            
+            document.addEventListener('dragend', function(e) {
+                if (e.target.classList.contains('sortable-item') && 
+                    e.target.closest(`#${containerId}`)) {
+                    e.target.style.opacity = '1';
+                    draggedItem = null;
+                }
+            });
+            
+            document.addEventListener('dragover', function(e) {
+                e.preventDefault();
+            });
+            
+            selectedList.addEventListener('dragenter', function(e) {
+                e.preventDefault();
+                const targetItem = e.target.closest('.sortable-item');
+                if (targetItem && targetItem !== draggedItem) {
+                    const rect = targetItem.getBoundingClientRect();
+                    const y = e.clientY - rect.top;
+                    
+                    if (y < rect.height / 2) {
+                        selectedList.insertBefore(draggedItem, targetItem);
+                    } else {
+                        selectedList.insertBefore(draggedItem, targetItem.nextSibling);
+                    }
+                    
+                    // 更新描述预览
+                    if (containerId === 'editModal') {
+                        updateEditDescriptionPreview();
+                    } else {
+                        updateDescriptionPreview();
+                    }
+                }
+            });
+        }
+        
+        /**
+         * 移除已选项
+         * @param {HTMLElement} element - 被点击的移除按钮
+         * @param {string} id - 项目ID
+         * @param {string} containerId - 容器ID
+         */
+        function removeSelectedItem(element, id, containerId) {
+            const prefix = containerId === 'editModal' ? 'edit_' : '';
+            
+            // 移除已选列表中的项
+            const item = element.closest('.sortable-item');
+            item.parentNode.removeChild(item);
+            
+            // 取消对应复选框的选中状态
+            const checkbox = document.querySelector(`#${containerId} .indicator-item[data-id="${id}"] .checkbox-input`);
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+            
+            // 更新已选计数
+            updateSelectedCount(containerId);
+            
+            // 更新描述预览
+            if (containerId === 'editModal') {
+                updateEditDescriptionPreview();
+            } else {
+                updateDescriptionPreview();
+            }
+        }
+        
+        /**
+         * 更新已选计数
+         * @param {string} containerId - 容器ID
+         */
+        function updateSelectedCount(containerId) {
+            const selectedIdPrefix = containerId === 'editModal' ? 'edit-' : '';
+            const count = document.querySelectorAll(`#${selectedIdPrefix}selected-indicators .sortable-item`).length;
+            document.getElementById(`${selectedIdPrefix}selected-count`).textContent = count;
+        }
+        
+        /**
+         * 保存业务术语
+         */
+        function saveTerminology() {
+            if (validateForm('add')) {
+                hideModal('addModal');
+                showToast('新建业务术语成功');
+            }
+        }
+        
+        /**
+         * 更新业务术语
+         */
+        function updateTerminology() {
+            if (validateForm('edit')) {
+                hideModal('editModal');
+                showToast('更新业务术语成功');
+            }
+        }
+        
+        /**
+         * 处理类型变化
+         */
+        function handleTypeChange() {
+            const select = document.getElementById('term-type');
+            const conditionGroup = document.getElementById('conditionGroup');
+            const indicatorGroup = document.getElementById('indicatorGroup');
+            
+            if (!select.value) {
+                conditionGroup.style.display = 'none';
+                indicatorGroup.style.display = 'none';
+            } else {
+                indicatorGroup.style.display = 'block';
+                
+                if (select.value === 'condition') {
+                    conditionGroup.style.display = 'block';
+                } else {
+                    conditionGroup.style.display = 'none';
+                }
+            }
+        }
+        
+        /**
+         * 处理编辑类型变化
+         */
+        function handleEditTypeChange() {
+            const select = document.getElementById('edit-term-type');
+            const conditionGroup = document.getElementById('edit-conditionGroup');
+            const indicatorGroup = document.getElementById('edit-indicatorGroup');
+            
+            if (!select.value) {
+                conditionGroup.style.display = 'none';
+                indicatorGroup.style.display = 'none';
+            } else {
+                indicatorGroup.style.display = 'block';
+                
+                if (select.value === 'condition') {
+                    conditionGroup.style.display = 'block';
+                } else {
+                    conditionGroup.style.display = 'none';
+                }
+            }
+        }
+        
+        // 页面加载完成后初始化所有功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化条件标签页切换
+            setupConditionTabs();
+            
+            // 初始化条件构建器
+            setupConditionBuilder();
+            
+            // 设置指标/维度选择和排序
+            setupIndicatorSelection();
+            
+            // 初始化描述编辑功能
+            setupDescriptionEditor();
+        });
+    </script>
+</body>
+</html>
