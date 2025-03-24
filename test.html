@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedBI 指标诊断</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #333;
+            background-color: #f5f7fa;
+        }
+
+        /* Variables */
+        :root {
+            --primary-color: #3370ff;
+            --text-color: #333;
+            --secondary-text: #666;
+            --light-text: #999;
+            --border-color: #e8e8e8;
+            --bg-light: #f5f7fa;
+            --success-color: #52c41a;
+            --warning-color: #ff7d00;
+            --danger-color: #f5222d;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            height: 56px;
+            padding: 0 20px;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-right: 40px;
+        }
+
+        .logo img {
+            height: 24px;
+            margin-right: 6px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .main-nav {
+            display: flex;
+        }
+
+        .nav-item {
+            padding: 0 16px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: var(--text-color);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+
+        .nav-item.active::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary-color);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .icon-button {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            border: none;
+            background: transparent;
+            margin-left: 8px;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-button:hover {
+            background-color: var(--bg-light);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background-color: var(--danger-color);
+            color: white;
+            font-size: 12px;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+            margin-left: 16px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Main container */
+        .container {
+            display: flex;
+            height: calc(100vh - 56px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 200px;
+            background-color: white;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .sidebar-header i {
+            margin-right: 8px;
+        }
+
+        .sidebar-header:hover {
+            background-color: #f9f9f9;
+        }
+
+        .sidebar-content {
+            padding-left: 16px;
+        }
+
+        .sidebar-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            color: var(--text-color);
+        }
+
+        .sidebar-item.active {
+            color: var(--primary-color);
+            background-color: rgba(51, 112, 255, 0.05);
+        }
+
+        .sidebar-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .sidebar-item span {
+            margin-left: 8px;
+        }
+
+        .sidebar-item .count {
+            position: absolute;
+            right: 16px;
+            color: var(--light-text);
+        }
+
+        .collapsible {
+            cursor: pointer;
+        }
+
+        .collapse-icon {
+            margin-right: 8px;
+            width: 16px;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+
+        .collapsed .collapse-icon {
+            transform: rotate(-90deg);
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            padding: 16px 24px;
+            overflow-y: auto;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .new-metric-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .new-metric-btn i {
+            margin-right: 8px;
+        }
+
+        .category-tabs {
+            display: flex;
+            margin-left: 24px;
+        }
+
+        .category-tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .category-tab.active {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .category-tab.active::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary-color);
+        }
+
+        /* Filter section */
+        .filter-section {
+            background-color: white;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+
+        .search-filters {
+            display: flex;
+            gap: 16px;
+            padding: 16px;
+        }
+
+        .filter-item {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            margin-right: 16px;
+        }
+
+        .filter-item i {
+            color: var(--light-text);
+            margin-right: 8px;
+        }
+
+        .filter-input {
+            background: #f5f7fa;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            padding: 8px 12px;
+            transition: all 0.3s;
+        }
+
+        .filter-input:hover, .filter-input:focus {
+            border-color: var(--primary-color);
+            background: white;
+            box-shadow: 0 0 0 2px rgba(51, 112, 255, 0.1);
+        }
+
+        .filter-input i {
+            color: var(--light-text);
+        }
+
+        .filter-options {
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .option-label {
+            color: var(--secondary-text);
+            font-size: 14px;
+            margin-right: 8px;
+        }
+
+        .option-button {
+            padding: 6px 12px;
+            border: none;
+            background-color: #f5f7fa;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        .option-button.active {
+            background-color: rgba(51, 112, 255, 0.1);
+            color: var(--primary-color);
+        }
+
+        .app-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 16px;
+        }
+
+        .app-filter {
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #e8e8e8;
+        }
+
+        .app-filter:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .app-filter.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Table */
+        .data-table {
+            background-color: white;
+            border-radius: 4px;
+            overflow: hidden;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 2000px;
+        }
+
+        thead {
+            background-color: #fafafa;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th, td {
+            white-space: nowrap;
+            padding: 12px 16px;
+            min-width: 120px;
+        }
+
+        th {
+            text-align: left;
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .checkbox {
+            width: 16px;
+            height: 16px;
+        }
+
+        .metric-name {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .name-wrapper {
+            display: flex;
+            align-items: center;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+            display: inline-block;
+        }
+
+        .status-dot.success {
+            background-color: var(--success-color);
+        }
+
+        .status-dot.warning {
+            background-color: var(--warning-color);
+        }
+
+        .metric-id {
+            font-size: 12px;
+            color: var(--light-text);
+            margin-top: 4px;
+            margin-left: 16px;
+        }
+
+        .tag {
+            background-color: #f5f7fa;
+            color: var(--secondary-text);
+            padding: 2px 6px;
+            border-radius: 2px;
+            font-size: 12px;
+            margin-left: 4px;
+        }
+
+        .action-buttons {
+            display: flex;
+        }
+
+        .action-btn {
+            color: var(--primary-color);
+            background: none;
+            border: none;
+            font-size: 13px;
+            cursor: pointer;
+            margin-right: 8px;
+            padding: 2px;
+        }
+
+        .action-btn:hover {
+            text-decoration: underline;
+        }
+
+        .action-more {
+            color: var(--light-text);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            font-size: 14px;
+        }
+
+        .page-size {
+            display: flex;
+            align-items: center;
+        }
+
+        .page-size-select {
+            margin-right: 8px;
+            padding: 4px 8px;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .page-size-select i {
+            margin-left: 8px;
+        }
+
+        .page-info {
+            color: var(--secondary-text);
+        }
+
+        .page-controls {
+            display: flex;
+            align-items: center;
+        }
+
+        .page-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: white;
+            margin: 0 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .page-btn.disabled {
+            color: var(--light-text);
+            cursor: not-allowed;
+        }
+
+        .page-jump {
+            display: flex;
+            align-items: center;
+            margin-left: 8px;
+        }
+
+        .page-jump input {
+            width: 50px;
+            height: 32px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            text-align: center;
+            margin: 0 8px;
+        }
+
+        /* 添加新的下拉菜单样式 */
+        .new-metric-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            border-radius: 4px;
+            z-index: 1000;
+        }
+
+        .dropdown-content.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f5f7fa;
+        }
+
+        .dropdown-submenu {
+            padding-left: 24px;
+        }
+
+        .dropdown-submenu-item {
+            padding-left: 32px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#ff4d4f">
+                    <path d="M3 3v18h18V3H3zm16 16H5V5h14v14z"></path>
+                    <path d="M15 7H9v10h6V7z"></path>
+                </svg>
+                <span class="logo-text">RedBI</span>
+            </div>
+            <nav class="main-nav">
+                <div class="nav-item">数据集</div>
+                <div class="nav-item">看板</div>
+                <div class="nav-item">自助分析</div>
+                <div class="nav-item active">指标诊断</div>
+            </nav>
+        </div>
+        <div class="header-right">
+            <button class="icon-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            </button>
+            <button class="icon-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span class="notification-badge">4</span>
+            </button>
+            <button class="icon-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+            </button>
+            <div class="user-avatar">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-5.5 0-10 2.5-10 7v1h20v-1c0-4.5-4.5-7-10-7z'/%3E%3C/svg%3E" alt="User">
+            </div>
+        </div>
+    </header>
+
+    <!-- Main container -->
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="3" y1="9" x2="21" y2="9"></line>
+                    <line x1="9" y1="21" x2="9" y2="9"></line>
+                </svg>
+                <span>管理中心</span>
+            </div>
+            <div class="sidebar-content">
+                <div class="sidebar-item active">指标管理</div>
+                <div class="sidebar-item">维度管理</div>
+                <div class="sidebar-item">业务术语管理</div>
+                <div class="sidebar-item">应用产品管理</div>
+                
+                <div class="sidebar-item collapsible">
+                    <span class="collapse-icon">▼</span>
+                    <span>全部</span>
+                    <span class="count">401</span>
+                </div>
+                
+                <div class="sidebar-item collapsible">
+                    <span class="collapse-icon">▼</span>
+                    <span>社区</span>
+                    <span class="count">28</span>
+                </div>
+                
+                <div class="sidebar-item" style="padding-left: 32px;">
+                    <span>用户</span>
+                    <span class="count">11</span>
+                </div>
+                
+                <div class="sidebar-item" style="padding-left: 32px;">
+                    <span>内容</span>
+                    <span class="count">7</span>
+                </div>
+                
+                <div class="sidebar-item" style="padding-left: 32px;">
+                    <span>增长</span>
+                    <span class="count">1</span>
+                </div>
+
+                <div class="sidebar-item" style="padding-left: 32px;">
+                    <span>搜索</span>
+                    <span class="count">2</span>
+                </div>
+                
+                <!-- More sidebar items... -->
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <div class="main-content">
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <button class="new-metric-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    新建指标
+                </button>
+                <div class="category-tabs">
+                    <div class="category-tab active">全部</div>
+                </div>
+            </div>
+
+            <!-- Filter section -->
+            <div class="filter-section">
+                <div class="search-filters">
+                    <div class="filter-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <div class="filter-input">
+                            搜索指标名称/指标ID/别名/相关字段名/UI...
+                        </div>
+                    </div>
+                    <div class="filter-item">
+                        <div class="filter-input">
+                            校验规则
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="filter-item">
+                        <div class="filter-input">
+                            指标口径负责人
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="filter-item">
+                        <div class="filter-input">
+                            技术口径负责人
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="filter-options">
+                    <span class="option-label">可分析维度</span>
+                    <div class="filter-input">
+                        请输入并选择
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
+                    
+                    <div class="option-button">仅看我负责的</div>
+                    <div class="option-button">仅看未关联数据集的</div>
+                    <a href="#" style="margin-left: auto; color: var(--primary-color); font-size: 14px;">更多筛选</a>
+                    <button style="margin-left: 16px; border: none; background: none; color: var(--secondary-text); cursor: pointer;">重置</button>
+                </div>
+                
+                <div class="app-filters">
+                    <div class="app-filter active">全部</div>
+                    <div class="app-filter">聚光(125)</div>
+                    <div class="app-filter">中小(64)</div>
+                    <div class="app-filter">乘风(60)</div>
+                    <div class="app-filter">灵犀(64)</div>
+                    <div class="app-filter">专业号(48)</div>
+                    <div class="app-filter">幕享(47)</div>
+                    <div class="app-filter">口碑通(47)</div>
+                    <div class="app-filter">OneDash(48)</div>
+                    <div class="app-filter">Insight(73)</div>
+                    <div class="app-filter">聚光(43)</div>
+                    <div class="app-filter">直播管理后台(43)</div>
+                    <div class="app-filter">千帆(43)</div>
+                    <div class="app-filter">Dataverse(43)</div>
+                    <div class="app-filter">自助分析(163)</div>
+                    <div class="app-filter">REDoc(147)</div>
+                </div>
+            </div>
+
+            <!-- Data table -->
+            <div class="data-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">
+                                <input type="checkbox" class="checkbox">
+                            </th>
+                            <th>指标名称</th>
+                            <th>应用产品</th>
+                            <th>业务域</th>
+                            <th>主题域</th>
+                            <th>指标口径</th>
+                            <th>校验规则</th>
+                            <th>一致性状态</th>
+                            <th>可分析维度</th>
+                            <th>指标别名</th>
+                            <th>相关字段名</th>
+                            <th>关联的数据集</th>
+                            <th>关联的产品页面</th>
+                            <th>数据格式</th>
+                            <th>是否可累加</th>
+                            <th>指标口径负责人</th>
+                            <th>技术口径负责人</th>
+                            <th>更新时间</th>
+                            <th>创建时间</th>
+                            <th style="text-align: center;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="checkbox">
+                            </td>
+                            <td>
+                                <div class="metric-name">
+                                    <div class="name-wrapper">
+                                        <span class="status-dot success"></span>
+                                        <span>00001</span>
+                                    </div>
+                                    <div class="metric-id">ID: 4048</div>
+                                </div>
+                            </td>
+                            <td>中小 乘风 <span class="tag">+12</span></td>
+                            <td>社区</td>
+                            <td>搜索</td>
+                            <td>ooo</td>
+                            <td>非强制</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn">查看</button>
+                                    <button class="action-btn">编辑</button>
+                                    <button class="action-btn">关联数据集</button>
+                                    <button class="action-more">⋮</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="checkbox">
+                            </td>
+                            <td>
+                                <div class="metric-name">
+                                    <div class="name-wrapper">
+                                        <span class="status-dot warning"></span>
+                                        <span>0000122</span>
+                                    </div>
+                                    <div class="metric-id">ID: 4909</div>
+                                </div>
+                            </td>
+                            <td>中小 乘风 <span class="tag">+12</span></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>ooo</td>
+                            <td>非强制</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn">查看</button>
+                                    <button class="action-btn">编辑</button>
+                                    <button class="action-btn">关联数据集</button>
+                                    <button class="action-more">⋮</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="checkbox">
+                            </td>
+                            <td>
+                                <div class="metric-name">
+                                    <div class="name-wrapper">
+                                        <span class="status-dot warning"></span>
+                                        <span>0318redoc测试22聚</span>
+                                    </div>
+                                    <div class="metric-id">ID: 4910</div>
+                                </div>
+                            </td>
+                            <td>聚光 中小 <span class="tag">+13</span></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>0318redoc测试</td>
+                            <td>强制</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn">查看</button>
+                                    <button class="action-btn">编辑</button>
+                                    <button class="action-btn">关联数据集</button>
+                                    <button class="action-more">⋮</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="checkbox">
+                            </td>
+                            <td>
+                                <div class="metric-name">
+                                    <div class="name-wrapper">
+                                        <span class="status-dot warning"></span>
+                                        <span>0318redoc测试聚</span>
+                                    </div>
+                                    <div class="metric-id">ID: 4727</div>
+                                </div>
+                            </td>
+                            <td>聚光 中小 <span class="tag">+13</span></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>0318redoc测试</td>
+                            <td>强制</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn">查看</button>
+                                    <button class="action-btn">编辑</button>
+                                    <button class="action-btn">关联数据集</button>
+                                    <button class="action-more">⋮</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="checkbox">
+                            </td>
+                            <td>
+                                <div class="metric-name">
+                                    <div class="name-wrapper">
+                                        <span class="status-dot warning"></span>
+                                        <span>11</span>
+                                    </div>
+                                    <div class="metric-id">ID: 4052</div>
+                                </div>
+                            </td>
+                            <td>聚光 中小 <span class="tag">+13</span></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>111</td>
+                            <td>强制</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn">查看</button>
+                                    <button class="action-btn">编辑</button>
+                                    <button class="action-btn">关联数据集</button>
+                                    <button class="action-more">⋮</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="checkbox">
+                            </td>
+                            <td>
+                                <div class="metric-name">
+                                    <div class="name-wrapper">
+                                        <span class="status-dot success"></span>
+                                        <span>111</span>
+                                    </div>
+                                    <div class="metric-id">ID: 2911</div>
+                                </div>
+                            </td>
+                            <td>聚光</td>
+                            <td>社区</td>
+                            <td>搜索</td>
+                            <td>111</td>
+                            <td>强制</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn">查看</button>
+                                    <button class="action-btn">编辑</button>
+                                    <button class="action-btn">关联数据集</button>
+                                    <button class="action-more">⋮</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="checkbox">
+                            </td>
+                            <td>
+                                <div class="metric-name">
+                                    <div class="name-wrapper">
+                                        <span class="status-dot warning"></span>
+                                        <span>111111</span>
+                                    </div>
+                                    <div class="metric-id">ID: 4016</div>
+                                </div>
+                            </td>
+                            <td>乘风 灵犀 <span class="tag">+11</span></td>
+                            <td>商业化</td>
+                            <td>搜索</td>
+                            <td>111</td>
+                            <td>强制</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn">查看</button>
+                                    <button class="action-btn">编辑</button>
+                                    <button class="action-btn">关联数据集</button>
+                                    <button class="action-more">⋮</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <div class="page-size">
+                    <div class="page-size-select">
+                        100 条/页
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
+                    <span class="page-info">共 401 条, 5 页</span>
+                </div>
+                <div class="page-controls">
+                    <button class="page-btn disabled">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <button class="page-btn active">1</button>
+                    <button class="page-btn">2</button>
+                    <button class="page-btn">3</button>
+                    <button class="page-btn">4</button>
+                    <button class="page-btn">5</button>
+                    <button class="page-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                    <div class="page-jump">
+                        跳至
+                        <input type="text" value="1">
+                        页
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple toggle for sidebar items
+        document.querySelectorAll('.collapsible').forEach(item => {
+            item.addEventListener('click', function() {
+                this.classList.toggle('collapsed');
+            });
+        });
+        
+        // Add click handlers for filter buttons
+        document.querySelectorAll('.app-filter').forEach(filter => {
+            filter.addEventListener('click', function() {
+                document.querySelectorAll('.app-filter').forEach(f => f.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        // Table row hover effect
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('mouseover', function() {
+                this.style.backgroundColor = '#f9f9f9';
+            });
+            row.addEventListener('mouseout', function() {
+                this.style.backgroundColor = '';
+            });
+        });
+        
+        // Pagination
+        document.querySelectorAll('.page-btn').forEach(btn => {
+            if (!btn.classList.contains('disabled')) {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.page-btn').forEach(b => b.classList.remove('active'));
+                    if (!this.querySelector('svg')) {
+                        this.classList.add('active');
+                    }
+                });
+            }
+        });
+
+        // 新建指标下拉菜单
+        document.querySelector('.new-metric-btn').addEventListener('click', function(e) {
+            const dropdown = document.querySelector('.dropdown-content');
+            dropdown.classList.toggle('show');
+            e.stopPropagation();
+        });
+
+        // 点击其他地方关闭下拉菜单
+        document.addEventListener('click', function() {
+            const dropdown = document.querySelector('.dropdown-content');
+            if (dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>
