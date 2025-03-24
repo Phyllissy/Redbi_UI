@@ -1,7 +1,7 @@
 {
   "routes": [
     { "src": "/", "dest": "/index1.html" },
-    { "src": "/new", "dest": "/new.html" }
+    { "src": "/new", "dest": "/new.html" },
+    { "src": "/indicator_mgt", "dest": "/indicator_mgt.html"}
   ]
 }
-
